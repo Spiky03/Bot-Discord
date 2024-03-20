@@ -1,22 +1,21 @@
 # DA AGGIUNGERE I BOTTONI CON LA POSSIBILITà DI EDITARE E CANCELLARE OLTRE ALLE REAZIONI DI APPROVAZIONE
 
 import discord
-from discord.ext import commands
+from discord import app_commands
+from discord.ext import commands, tasks
 import asyncio
 
 from datetime import datetime
 import dateparser
 
 
-class Proposta_sessione(commands.GroupCog, group_name='sessione'):
-    
-    async def cog_load(self):
-        print("Proposte Sessioni caricato!")
+class Sessione(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
     
-    @commands.command(name="sessione", description="Proponi una tua Sessione ai responsabili Trama & Lore!")
+    @app_commands.command(name="sessione", description="Proponi una tua Sessione ai responsabili Trama & Lore!")
+    @app_commands.guild_only()
     async def proposta_sessione(self, ctx: discord.Interaction):
     
         await ctx.response.defer(thinking=True, ephemeral=True)
@@ -54,7 +53,7 @@ class Proposta_sessione(commands.GroupCog, group_name='sessione'):
         
         try:
             while True:
-                msg = await bot.wait_for('message', check=check, timeout=60.0)
+                msg = await self.bot.wait_for('message', check=check, timeout=60.0)
                 if msg.content.lower() == 'cancella':
                     await ctx.channel.purge(limit=1)
                     await dm_channel.send('Sessione cancellata...')
@@ -85,7 +84,7 @@ class Proposta_sessione(commands.GroupCog, group_name='sessione'):
                 await dm_channel.send(embed=embed)
         
                 while True:
-                    msg = await bot.wait_for('message', check=check, timeout=60.0)
+                    msg = await self.bot.wait_for('message', check=check, timeout=60.0)
                     if msg.content.lower() == 'cancella':
                         await dm_channel.send('Sessione cancellata...')
                         return
@@ -114,7 +113,7 @@ class Proposta_sessione(commands.GroupCog, group_name='sessione'):
             embed.set_footer(text=footer[-32:])
             await dm_channel.send(embed=embed)
             
-            msg = await bot.wait_for('message', check=check, timeout=60.0)
+            msg = await self.bot.wait_for('message', check=check, timeout=60.0)
             
             if msg.content.lower() == 'cancella':
                 await dm_channel.send('Sessione cancellata...')
@@ -129,14 +128,14 @@ class Proposta_sessione(commands.GroupCog, group_name='sessione'):
         
     # DATA
         session_date = True
-        embed = discord.Embed(title="Quando inizierÃ  la Sessione?",
-                            description="> VenerdÃ¬ 21.00\n> Domani 18.00\n> Ora\n> Tra 1 ora\n> AAAA-MM-GG 19.00\nDigita 'None' per nessuna data.",
+        embed = discord.Embed(title="Quando inizierà  la Sessione?",
+                            description="> Venerdì 21.00\n> Domani 18.00\n> Ora\n> Tra 1 ora\n> AAAA-MM-GG 19.00\nDigita 'None' per nessuna data.",
                             color=color)
         embed.set_footer(text=footer[-32:])
         await dm_channel.send(embed=embed)
         try:
             while True:
-                msg = await bot.wait_for('message', check=check, timeout=60.0)
+                msg = await self.bot.wait_for('message', check=check, timeout=60.0)
                 if msg.content.lower() == 'cancella':
                     await dm_channel.send('Sessione cancellata...')
                     return
@@ -163,7 +162,7 @@ class Proposta_sessione(commands.GroupCog, group_name='sessione'):
             embed.set_footer(text=footer[-32:])
             await dm_channel.send(embed=embed)
             
-            msg = await bot.wait_for('message', check=check, timeout=60.0)
+            msg = await self.bot.wait_for('message', check=check, timeout=60.0)
             if msg.content.lower() == 'none':
                 session_res = 'Nessuna'
             elif msg.content.lower() == 'cancella':
@@ -186,12 +185,12 @@ class Proposta_sessione(commands.GroupCog, group_name='sessione'):
             await dm_channel.send(embed=embed)
             
             while True:
-                msg = await bot.wait_for('message', check=check, timeout=60.0)
+                msg = await self.bot.wait_for('message', check=check, timeout=60.0)
                 if msg.content.lower() == 'cancella':
                     await dm_channel.send('Sessione cancellata...')
                     return
                 elif msg.content.lower() == 'none':
-                    session_amt = 'â'
+                    session_amt = '∞'
                     break
                 elif msg.content.isdigit():
                     session_amt = msg.content
@@ -207,9 +206,11 @@ class Proposta_sessione(commands.GroupCog, group_name='sessione'):
         
     # EMBED FINALE
         embed = discord.Embed(title="",
-                            description=f'### proposta sessione di __{ctx.user.mention}__',
+                            description=f'### Proposta di Sessione di __{ctx.user.mention}__',
                             color=color)
-        
+        embed.set_author(name=ctx.user.display_name, icon_url=ctx.user.display_avatar.url)
+        embed.set_footer(text=str(datetime.today().strftime('%d/%m/%Y %H:%M')))
+
         if session_date:
             session_date = int(date.timestamp())
             embed.add_field(name="Data",
@@ -242,27 +243,46 @@ class Proposta_sessione(commands.GroupCog, group_name='sessione'):
                                 value=session_desc,
                                 inline=False)
                 session_desc = ""
-                
-        embed.set_author(name=ctx.user.display_name, icon_url=ctx.user.display_avatar.url)
         
-        embed.set_footer(text=str(datetime.today().strftime('%d/%m/%Y %H:%M')))
-        
-        message = await ctx.followup.send(embed=embed)
+        message = await ctx.channel.send(embed=embed)
 
-        # THREAD PRIVATO
-        thread = await message.start_thread_with_message(name="Discussione privata", private=True)
+        # EMBED RISPOSTA
+        embed = discord.Embed(title="La proposta di sessione è stata creata!",
+                            description=f"[Clicca qui per visualizzare la proposta](<{message.jump_url}>)",
+                            color=color)
+        
+        await dm_channel.send(embed=embed)
+
         role = discord.utils.get(ctx.guild.roles, name="Responsabile Trama & Lore")
-        await thread.add_user(role)
-        await thread.add_user(ctx.user)
-        await thread.send(content=f"### {ctx.user.mention}, in caso di discussioni, richieste o dubbi puoi chiedere privatamente qui, ai {role.mention}!", silent=True)
+
+        # THREAD CON REAZIONE
+        thread = await message.create_thread(name=f"{sum(1 for i in ctx.channel.threads if ctx.user.name in i.name)+1}° Proposta di {ctx.user.name}")
+        await thread.send(content=f"### {ctx.user.mention}, in caso di aggiunte, richieste o dubbi puoi chiedere qui ad un {role.mention}!", silent=True)
+        await message.add_reaction('✅')
+        await message.add_reaction('❌')
+
+        def check(reaction, user):
+            return (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌') and reaction.count >= len(role.members)//2
+        
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=60*60*24*7, check=check)  # 60 sec * 60 min * 24 hours * 7 days
+            if str(reaction.emoji) == '✅' and reaction.count >= reaction.count >= len(role.members)//2:
+                    await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione è stata approvata!')
+                    await thread.edit(archived=True)
+
+            elif str(reaction.emoji) == '❌' and reaction.count >= reaction.count >= len(role.members)//2:
+                await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione __NON__ è stata approvata.\nPer capirne le motivazioni, contattare un {role.mention} (anche in questo thread stesso).')
+
+        except asyncio.TimeoutError:
+            return
         
         # TRANSIZIONE NEL FORUM
-        # for thread in bot.get_channel(1202563289377275924).threads:
-        #     # Controlla se il nome del thread contiene il nickname o il tag di chi ha inviato il messaggio
-        #     if ctx.user.nick in thread.name or ctx.user.name in thread.name:
-        #         # Invia il messaggio nel thread corrispondente
-        #         await thread.send(content=f'### {role.mention}', embed=embed)
-        #         break
+        for thread in self.bot.get_channel(1202563289377275924).threads:
+            # Controlla se il nome del thread contiene il nickname o il tag di chi ha inviato il messaggio
+            if ctx.user.nick in thread.name or ctx.user.name in thread.name:
+                # Invia il messaggio nel thread corrispondente
+                await thread.send(content=f'### {role.mention}', embed=embed)
+                break
 
 async def setup(bot):
-    await bot.add_cog(Proposta_sessione(bot))
+    await bot.add_cog(Sessione(bot))

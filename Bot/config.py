@@ -1,5 +1,3 @@
-DISCORD_TOKEN = 'MTE5MzQzNzU4MjIxNDgyODAzMg.G-EuM1.KS7uhOTN0kOW0qTnJ1i3qN0g2Rv2e6QeUDac5s'
-
 display_name_master = {"Jace, Ermes's lover <3 (Luca)": 223190037691498496, 'Cal [Simo]': 462920624176758798, 
                        'Malos': 276762790201524224, 'ArchiBAT [TheNightHunter]': 273246007066624001, 
                        'Rondo da Borgo (Rando)': 393891222781034499, 'Tyrael': 433227911865303040, 
@@ -13,20 +11,3 @@ display_name_master = {"Jace, Ermes's lover <3 (Luca)": 223190037691498496, 'Cal
                        'hubris (ex delsyn)': 569976596321009674, 'Robot (Rick)': 847484088058118155, 
                        'Don Torquato Scintilla (Simone)': 687754586462748747, 'WD-40': 686993854779490321, 
                        'Il Pianista [SS-Speedwagon]': 303927342970044416}
-
-name_master = {'darknext7': 223190037691498496, 'mezzorcosorco': 462920624176758798, 'thedado771': 276762790201524224, '.vogo':558697506155003926,
-               'thenighthunter': 273246007066624001, 'cichester': 393891222781034499, 'starplatinum09': 433227911865303040, 
-               'noctuary_98': 1074415066591543436, 'mattia9731': 779292175400828948, 'blackbro': 316981699571613697, 
-               '.redwind': 172074260863385600, 'dodio': 686199276765839373, 'edo9000': 319884762246545409, 
-               'gracesky': 708039190352232558, 'serylcrown': 329979827580960780, 'niels_s': 688092486584762477, 
-               'spiky03': 463687872088768522, 'bccdc_.': 474762084677320704, 'danielepotenza': 326706374337888256, 
-               'gerko02': 507830047005081602, 'fill2400': 337379502420393988, 'gytohdrakewind': 688496111673016408, 
-               'asteron6112': 685409172040319026, 'rafaelabbas': 575207430431178752, '_subtlety': 861643199771967499, 
-               'zairy_1732': 569976596321009674, 'blackcloud4633': 847484088058118155, 'ilmenestrello': 687754586462748747, 
-               'sancallisto42': 686993854779490321, 'mett_007': 934142257748140062, 'retlawmaster': 303927342970044416}
-
-name_sala_regionale = {'Laziese':'Sala Lupacchiotti', 'Siciliano':'Sala Arancino', 'Sardo':'Sala cappitto mi hai', 'Pugliese':'Sala Panzerotto',
-             'Lucano':'Sala Pecorari', 'Calabrese':'Sala Scimmie', 'Campano':'Sala Pickpocket', 'Abbruzzese':'Sala Terremotati', 'Liguri':'Sala Pota',
-             'Umbro':'Sala Cinghiale', 'Toscano':'Sala Maremma Maiala', 'Emiliano-Romagnolo':'Sala Fascisti', 'Piemontese':'Sala Minchia Diofa',
-             'Lombrado':'Sala Aperitivo', 'Veneto':'Sala Bestemmiatori', 'Friuliano':'Sala Tristini', 'Marchigiano':'Sala Porcamadoro',
-             'Trentino':'Sala Ammazza Orsi'}
