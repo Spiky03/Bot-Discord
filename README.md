@@ -6,11 +6,14 @@ Nella cartella 📁`bot` vi sono:
 * `config.py`, un file da buttare che non serve a nulla;
 Nella cartella 📁`cogs` invece vi sono tutte le funzioni del bot che sono:
 * `basic_commands.py`, funzioni base come:
- * Clear (pulisce i messaggi)
- * Test (invia i messaggi e i file con il bot)
- * Join role (per il ruolo @Disperso e @BOT)
- * Shutdown (solo l'owner può usarlo per spegnere il bot da Discord)
-* `join_to_create.py`, funzione che genera nuovi canali vocali (per spam e zone master) entrando in quello di base;
+  * Clear (pulisce i messaggi)
+  * Test (invia i messaggi e i file con il bot)
+  * Join role (per il ruolo @Disperso e @BOT)
+  * Shutdown (solo l'owner può usarlo per spegnere il bot da Discord)
+* `join_to_create.py`, funzione che genera nuovi canali vocali per:
+  * Sale Master
+  * Sale Regionali
+  * Sale Spam
 * `sessione.py`, funzione per la proposta, approvazione e archiviazione delle sessioni di gioco dei master;
 * `token.py`, ANCORA IN FASE DI IMPEMENTAZIONE ⚠️;
 * Proposta per le sessioni master
