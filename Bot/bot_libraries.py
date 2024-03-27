@@ -7,3 +7,7 @@ import asyncio
 import random
 from datetime import datetime
 import dateparser
+import discord
+import asyncio
+import os
+from dotenv import load_dotenv
