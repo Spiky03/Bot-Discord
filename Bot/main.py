@@ -1,10 +1,4 @@
-import discord
-import asyncio
-from discord.ext import commands
-from discord import app_commands
-
-import os
-from dotenv import load_dotenv
+import bot_libraries.py
 load_dotenv()
 
 # TOKEN
