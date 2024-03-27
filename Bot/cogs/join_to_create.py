@@ -1,7 +1,4 @@
-import discord
-from discord.ext import commands
-import asyncio
-import random
+
 
 
 class JTCC(commands.Cog):
