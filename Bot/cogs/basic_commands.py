@@ -1,7 +1,4 @@
-import discord
-from discord import app_commands
-from discord.ext import commands
-import asyncio
+import bot_libraries.py
 
 class basic_commands(commands.Cog):
 
