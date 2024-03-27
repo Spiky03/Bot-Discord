@@ -47,8 +47,11 @@ class basic_commands(commands.Cog):
 
     # TEST
     @commands.command()
-    async def test(self, ctx, arg: str):
-        await ctx.send(arg)
+    async def test(self, ctx):
+        await ctx.channel.purge(limit=1)
+        await ctx.send(ctx.message.content[5:])
+        for attachment in ctx.message.attachments:
+            await ctx.send(attachment.url)
 
     # SHUTDOWN
     @commands.command()
