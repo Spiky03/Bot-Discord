@@ -1,12 +1,12 @@
 import bot_libraries.py as bl
 
-class basic_commands(commands.Cog):
+class basic_commands(bl.commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
     
     #### JOIN-ROLE
-    @commands.Cog.listener()
+    bl.@commands.Cog.listener()
     async def on_member_join(self, member):
         if member.bl.guild.id != 809055669075312691:
             return
@@ -18,16 +18,16 @@ class basic_commands(commands.Cog):
         await member.add_roles(role)
 
     # AUTO REACTIONS
-    @commands.Cog.listener()
+    bl.@commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.bl.channel.id in [1214564510833319988, 1202550269057957938]:
             await message.bl.add_reaction('✅')
             await message.bl.add_reaction('❌')
     
     # CLEAR
-    @commands.hybrid_command(name="clear", description="Cancella più messaggi assieme")
-    @commands.has_permissions(manage_messages=True)
-    @commands.bot_has_permissions(manage_messages=True)
+    bl.@commands.hybrid_command(name="clear", description="Cancella più messaggi assieme")
+    bl.@commands.has_permissions(manage_messages=True)
+    bl.@commands.bot_has_permissions(manage_messages=True)
     async def clear(self, ctx, amount: int):
         await ctx.bl.channel.purge(limit=amount)
         if amount == 1:
@@ -35,7 +35,7 @@ class basic_commands(commands.Cog):
         else:
             await ctx.bl.send(f"{amount} Messaggi eliminati", delete_after=5)
 
-    @clear.error
+    bl.@clear.error
     async def clear_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.bl.send("Mi dispiace, ma non hai i permessi per usare questo comando.", delete_after=5)
@@ -43,7 +43,7 @@ class basic_commands(commands.Cog):
             await ctx.bl.send("Mi dispiace, ma il bot non ha i permessi per eseguire questo comando.", delete_after=5)
 
     # TEST
-    @commands.command()
+    bl.@commands.command()
     async def test(self, ctx):
         await ctx.bl.channel.purge(limit=1)
         await ctx.bl.send(ctx.message.content[5:])
@@ -51,8 +51,8 @@ class basic_commands(commands.Cog):
             await ctx.bl.send(attachment.url)
 
     # SHUTDOWN
-    @commands.command()
-    @commands.is_owner()
+    bl.@commands.command()
+    bl.@commands.is_owner()
     async def shutdown(self, ctx):
         await ctx.bl.send(content = "Spegnendo il bot...", delete_after=3)
         await asyncio.bl.sleep(3)
