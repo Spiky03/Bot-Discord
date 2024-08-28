@@ -15,4 +15,5 @@ Nella cartella 📁`cogs` invece vi sono tutte le funzioni del bot che sono:
   * Sale Regionali
   * Sale Spam
 * `sessione.py`, funzione per la proposta e l'approvazione delle sessioni (da **implementare i bottoni**);
-* `token.py`, ANCORA IN FASE DI IMPEMENTAZIONE ⚠️.
+* `token.py`, DA REVISIONARE. ⚠️
+* `diario.py` DA IMPLEMENTARE. ⚠️
