@@ -1,6 +1,6 @@
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 import asyncio
 
 class basic_commands(commands.Cog):
@@ -8,7 +8,7 @@ class basic_commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    #### JOIN-ROLE
+    # JOIN-ROLE
     @commands.Cog.listener()
     async def on_member_join(self, member):
         if member.guild.id != 809055669075312691:
@@ -19,6 +19,24 @@ class basic_commands(commands.Cog):
         else:
             role = discord.utils.get(member.guild.roles, name="Disperso")
         await member.add_roles(role)
+        
+    # REAPETED MESSAGES
+    @commands.command()
+    async def set_message(self, ctx, channel: discord.TextChannel, *, message: str):
+        self.message_channel_id = channel.id
+        self.message_content = message
+        await ctx.send(f"Messaggio impostato per il canale {channel.mention}: {message}")
+
+    @tasks.loop(weeks=1)
+    async def send_message(self):
+        if self.message_channel_id and self.message_content:
+            channel = self.bot.get_channel(self.message_channel_id)
+            if channel:
+                await channel.send(self.message_content)
+
+    @send_message.before_loop
+    async def before_send_message(self):
+        await self.bot.wait_until_ready()
 
     # AUTO REACTIONS
     @commands.Cog.listener()
