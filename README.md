@@ -17,3 +17,4 @@ Nella cartella 📁`cogs` invece vi sono tutte le funzioni del bot che sono:
 * `sessione.py`, funzione per la proposta e l'approvazione delle sessioni (DA IMPLEMENTARE BOTTONI E EDIT E DELETE ⚠️);
 * `token.py`, DA REVISIONARE. ⚠️
 * `diario.py` DA IMPLEMENTARE. ⚠️
+* `raccolta.py` DA IMPLEMENTARE. ⚠️
