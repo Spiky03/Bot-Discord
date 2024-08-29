@@ -264,16 +264,16 @@ class Sessione(commands.Cog):
        
         self.checkin_task = self.checkin.start()
         
-        @tasks.loop(seconds = 1)
-        async def checkin(reaction,user):
-          if((str(reaction.emoji) == '✅' and reaction.count >= len(role.members)//2 )): 
-                await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione è stata approvata!')
-                await thread.edit(archived=True)
-                self.checkin_task.cancel()
-                
-          elif  ((str(reaction.emoji) == '❌' and reaction.count >= len(role.members)//2)):
-              await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione __NON__ è stata approvata.\nPer capirne le motivazioni, contattare un cazzo (anche in questo thread stesso).')
-              self.checkin_task.cancel()
+    @tasks.loop(seconds = 1)
+    async def checkin(self, ctx, thread, reaction, role, user):
+        if((str(reaction.emoji) == '✅' and reaction.count >= len(role.members)//2 )): 
+            await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione è stata approvata!')
+            await thread.edit(archived=True)
+            self.checkin_task.cancel()
+            
+        elif  ((str(reaction.emoji) == '❌' and reaction.count >= len(role.members)//2)):
+            await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione __NON__ è stata approvata.\nPer capirne le motivazioni, contattare un cazzo (anche in questo thread stesso).')
+            self.checkin_task.cancel()
               
               
 async def setup(bot):
