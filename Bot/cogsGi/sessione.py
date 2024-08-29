@@ -253,7 +253,7 @@ class Sessione(commands.Cog):
         
         await dm_channel.send(embed=embed)
 
-        role = discord.utils.get(ctx.guild.roles, name="Test")
+        role = discord.utils.get(ctx.guild.roles, name="Responsabile Trama & Lore")
 
         # THREAD CON REAZIONE
         thread = await message.create_thread(name=f"{sum(1 for i in ctx.channel.threads if ctx.user.name in i.name)+1}° Proposta di {ctx.user.name}")
@@ -262,19 +262,23 @@ class Sessione(commands.Cog):
         await message.add_reaction('❌')
 
        
-        self.checkin_task = self.checkin.start()
+        self.check_task = self.check.start(ctx,thread,role)
         
-        @tasks.loop(seconds = 1)
-        async def checkin(reaction,user):
-          if((str(reaction.emoji) == '✅' and reaction.count >= len(role.members)//2 )): 
+    @tasks.loop(seconds = 1)
+    async def check(self,ctx,thread,role):
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add') 
+            if((str(reaction.emoji) == '✅' and reaction.count >= len(role.members)//2 )): 
                 await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione è stata approvata!')
                 await thread.edit(archived=True)
-                self.checkin_task.cancel()
+                self.check_task.cancel()
+            
+            elif  ((str(reaction.emoji) == '❌' and reaction.count >= len(role.members)//2)):
+                await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione __NON__ è stata approvata.\nPer capirne le motivazioni, contattare un cazzo (anche in questo thread stesso).')
+                self.check_task.cancel()
                 
-          elif  ((str(reaction.emoji) == '❌' and reaction.count >= len(role.members)//2)):
-              await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione __NON__ è stata approvata.\nPer capirne le motivazioni, contattare un cazzo (anche in questo thread stesso).')
-              self.checkin_task.cancel()
-              
-              
+        except asyncio.TimeoutError:
+                return   
+                
 async def setup(bot):
     await bot.add_cog(Sessione(bot))
