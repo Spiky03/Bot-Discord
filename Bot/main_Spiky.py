@@ -24,9 +24,9 @@ async def sync(ctx):
 async def on_ready():
     
     # COGS
-    for file in os.listdir("C:\\Users\\gagli\\Documents\\Bot-Discord\\Bot\\cogs prova"):
+    for file in os.listdir(r"C:\Users\gagli\Documents\Bot-Discord\Bot\cogs_Spiky"):
         if file.endswith(".py"):
-            await bot.load_extension(f"cogs prova.{file[:-3]}")
+            await bot.load_extension(f"cogs_Spiky.{file[:-3]}")
 
     try:
         synced = await bot.tree.sync()
