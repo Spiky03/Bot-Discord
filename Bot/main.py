@@ -14,6 +14,11 @@ TOKEN = os.getenv("TOKEN")
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='/', intents=intents)
 
+@bot.command(name="sync")
+async def sync(ctx):
+    synced = await bot.tree.sync()
+    print(f"Synced {len(synced)} command(s).")
+
 # READY
 @bot.event  
 async def on_ready():
