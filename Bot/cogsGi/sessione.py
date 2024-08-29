@@ -274,7 +274,7 @@ class Sessione(commands.Cog):
                 self.check_task.cancel()
             
             elif  ((str(reaction.emoji) == '❌' and reaction.count >= len(role.members)//2)):
-                await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione __NON__ è stata approvata.\nPer capirne le motivazioni, contattare un cazzo (anche in questo thread stesso).')
+                await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione __NON__ è stata approvata.\nPer capirne le motivazioni, contattare un {role.mention} (anche in questo thread stesso).')
                 self.check_task.cancel()
                 
         except asyncio.TimeoutError:
