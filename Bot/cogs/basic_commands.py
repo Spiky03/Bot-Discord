@@ -20,7 +20,7 @@ class basic_commands(commands.Cog):
             role = discord.utils.get(member.guild.roles, name="Disperso")
         await member.add_roles(role)
         
-    # REAPETED MESSAGES
+    # REAPETED MESSAGES (In implementazione)
     @commands.command()
     async def set_message(self, ctx, channel: discord.TextChannel, *, message: str):
         self.message_channel_id = channel.id
@@ -46,15 +46,25 @@ class basic_commands(commands.Cog):
             await message.add_reaction('❌')
     
     # CLEAR
-    @commands.hybrid_command(name="clear", description="Cancella più messaggi assieme")
-    @commands.has_permissions(manage_messages=True)
-    @commands.bot_has_permissions(manage_messages=True)
-    async def clear(self, ctx, amount: int):
+    @app_commands.command(name="clear", description="Cancella più messaggi assieme")
+    async def clear_app(self, ctx: discord.Interaction, amount: int):
+        await ctx.response.defer(ephemeral=True)
+        
         await ctx.channel.purge(limit=amount)
         if amount == 1:
-            await ctx.send(f"1 Messaggio eliminato", delete_after=5)
+            await ctx.followup.send(f"1 Messaggio eliminato", ephemeral=True)
         else:
-            await ctx.send(f"{amount} Messaggi eliminati", delete_after=5)
+            await ctx.followup.send(f"{amount} Messaggi eliminati", ephemeral=True)
+    
+    @commands.command()
+    @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True)
+    async def clear(self, ctx: discord.Interaction, amount: int):
+        await ctx.channel.purge(limit=amount)
+        if amount == 1:
+            await ctx.send(f"1 Messaggio eliminato", delete_after=3)
+        else:
+            await ctx.send(f"{amount} Messaggi eliminati", delete_after=3)
 
     @clear.error
     async def clear_error(self, ctx, error):

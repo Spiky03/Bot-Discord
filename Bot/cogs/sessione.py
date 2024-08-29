@@ -42,7 +42,7 @@ class Sessione(commands.Cog):
                 output_string += f"**{key}**. {value}\n"
             return output_string
         
-        
+        timeout = 600.0   
     # TIPO
         session_types = {'1':'Vocale', '2': 'Play by Chat', '3': 'Live'}
         embed = discord.Embed(title="Seleziona il tipo di Sessione",
@@ -53,10 +53,10 @@ class Sessione(commands.Cog):
         
         try:
             while True:
-                msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                msg = await self.bot.wait_for('message', check=check, timeout=timeout)
                 if msg.content.lower() == 'cancella':
                     await ctx.channel.purge(limit=1)
-                    await dm_channel.send('Sessione cancellata...')
+                    await dm_channel.send('Sessione cancellata.')
                     return
                 elif msg.content in session_types.keys():
                     session_type = session_types[msg.content]
@@ -65,7 +65,7 @@ class Sessione(commands.Cog):
                     await dm_channel.send("Non hai scelto alcuna opzione. Riprova usando una delle opzioni sopra elencate.")
         
         except asyncio.TimeoutError:
-            await dm_channel.send('Sei andato al cesso? Riproveremo più tardi...')
+            await dm_channel.send('Sei andato al cesso? Riproveremo più tardi.')
             return
         
         
@@ -84,9 +84,9 @@ class Sessione(commands.Cog):
                 await dm_channel.send(embed=embed)
         
                 while True:
-                    msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                    msg = await self.bot.wait_for('message', check=check, timeout=timeout)
                     if msg.content.lower() == 'cancella':
-                        await dm_channel.send('Sessione cancellata...')
+                        await dm_channel.send('Sessione cancellata.')
                         return
                     elif msg.content in duration_types[session_type].keys():
                         session_duration = duration_types[session_type][msg.content]
@@ -100,7 +100,7 @@ class Sessione(commands.Cog):
                 session_types = session_type
         
         except asyncio.TimeoutError:
-            await dm_channel.send('Sei andato al cesso? Riproveremo più tardi...')
+            await dm_channel.send('Sei andato al cesso? Riproveremo più tardi.')
             return
 
         
@@ -113,31 +113,31 @@ class Sessione(commands.Cog):
             embed.set_footer(text=footer[-32:])
             await dm_channel.send(embed=embed)
             
-            msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+            msg = await self.bot.wait_for('message', check=check, timeout=timeout)
             
             if msg.content.lower() == 'cancella':
-                await dm_channel.send('Sessione cancellata...')
+                await dm_channel.send('Sessione cancellata.')
                 return
             else:
                 session_desc = msg.content
                 
         except asyncio.TimeoutError:
-            await dm_channel.send('Sei andato al cesso? Riproveremo più tardi...')
+            await dm_channel.send('Sei andato al cesso? Riproveremo più tardi.')
             return
         
         
     # DATA
         session_date = True
         embed = discord.Embed(title="Quando inizierà  la Sessione?",
-                            description="> Venerdì 21.00\n> Domani 18.00\n> Ora\n> Tra 1 ora\n> AAAA-MM-GG 19.00\nDigita 'None' per nessuna data.",
+                            description="Digita `None` se non ha una data.\n\n> Venerdì 21.00\n> Domani 18.00\n> Ora\n> Tra 1 ora\n> AAAA-MM-GG 19.00",
                             color=color)
         embed.set_footer(text=footer[-32:])
         await dm_channel.send(embed=embed)
         try:
             while True:
-                msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                msg = await self.bot.wait_for('message', check=check, timeout=timeout)
                 if msg.content.lower() == 'cancella':
-                    await dm_channel.send('Sessione cancellata...')
+                    await dm_channel.send('Sessione cancellata.')
                     return
                 elif msg.content.lower() == 'none':
                     session_date = False
@@ -150,44 +150,44 @@ class Sessione(commands.Cog):
                         await dm_channel.send("Non riesco a capire il formato della data. Riprova usando uno dei formati sopra elencati.")
         
         except asyncio.TimeoutError:
-            await dm_channel.send('Sei andato al cesso? Riproveremo più tardi...')
+            await dm_channel.send('Sei andato al cesso? Riproveremo più tardi.')
             return
         
         
     # RESTRIZIONI
         try:
             embed = discord.Embed(title="Inserisci le restrizioni della Sessione",
-                                description="> Livelli: 5-8\n> Gilda: Diamanti Neri\n> Fazione: Guardie\n> Classe: Bardi\n> Role: Ha visto di persona Gesù\nDigita 'None' per nessuna restrizione.",
+                                description="Digita `None` se non ha una restrizione.\n\n> Livelli: 5-8\n> Gilda: Diamanti Neri\n> Fazione: Guardie\n> Classe: Bardi\n> Role: Ha visto di persona Gesù",
                                 color=color)
             embed.set_footer(text=footer[-32:])
             await dm_channel.send(embed=embed)
             
-            msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+            msg = await self.bot.wait_for('message', check=check, timeout=timeout)
             if msg.content.lower() == 'none':
                 session_res = 'Nessuna'
             elif msg.content.lower() == 'cancella':
-                await dm_channel.send('Sessione cancellata...')
+                await dm_channel.send('Sessione cancellata.')
                 return
             else:
                 session_res = msg.content
                 
         except asyncio.TimeoutError:
-            await dm_channel.send('Sei andato al cesso? Riproveremo più tardi...')
+            await dm_channel.send('Sei andato al cesso? Riproveremo più tardi.')
             return 
         
         
     # NUMERO GIOCATORI
         try:
             embed = discord.Embed(title="Inserisci un limite di giocatori per la Sessione",
-                                description="Utilizza solo numeri. Digita 'None' per non mettere un limite.",
+                                description="Utilizza solo numeri. Digita `None` per non mettere un limite.",
                                 color=color)
             embed.set_footer(text=footer[-32:])
             await dm_channel.send(embed=embed)
             
             while True:
-                msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                msg = await self.bot.wait_for('message', check=check, timeout=timeout)
                 if msg.content.lower() == 'cancella':
-                    await dm_channel.send('Sessione cancellata...')
+                    await dm_channel.send('Sessione cancellata.')
                     return
                 elif msg.content.lower() == 'none':
                     session_amt = '∞'
@@ -199,7 +199,7 @@ class Sessione(commands.Cog):
                     await dm_channel.send("Non hai inserito un numero. Riprova.")
                 
         except asyncio.TimeoutError:
-            await dm_channel.send('Sei andato al cesso? Riproveremo più tardi...')
+            await dm_channel.send('Sei andato al cesso? Riproveremo più tardi.')
             return 
         
         
