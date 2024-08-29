@@ -51,10 +51,7 @@ class basic_commands(commands.Cog):
         await ctx.response.defer(ephemeral=True)
         
         await ctx.channel.purge(limit=amount)
-        if amount == 1:
-            await ctx.followup.send(f"1 Messaggio eliminato", ephemeral=True)
-        else:
-            await ctx.followup.send(f"{amount} Messaggi eliminati", ephemeral=True)
+        await ctx.followup.send(f"{amount} Messagg{'i' if amount != 1 else 'o'} eliminat{'i' if amount != 1 else 'o'}", ephemeral=True)
     
     @commands.command()
     @commands.has_permissions(manage_messages=True)

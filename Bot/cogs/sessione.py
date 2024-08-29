@@ -244,7 +244,7 @@ class Sessione(commands.Cog):
                                 inline=False)
                 session_desc = ""
         
-        message = await ctx.channel.send(embed=embed)
+        message = await self.bot.get_channel(1196894324122714283).send(embed=embed)
 
         # EMBED RISPOSTA
         embed = discord.Embed(title="La proposta di sessione è stata creata!",
@@ -275,14 +275,6 @@ class Sessione(commands.Cog):
 
         except asyncio.TimeoutError:
             return
-        
-        # TRANSIZIONE NEL FORUM
-        for thread in self.bot.get_channel(1202563289377275924).threads:
-            # Controlla se il nome del thread contiene il nickname o il tag di chi ha inviato il messaggio
-            if ctx.user.nick in thread.name or ctx.user.name in thread.name:
-                # Invia il messaggio nel thread corrispondente
-                await thread.send(content=f'### {role.mention}', embed=embed)
-                break
 
 async def setup(bot):
     await bot.add_cog(Sessione(bot))
