@@ -275,14 +275,14 @@ class Sessione(commands.Cog):
         await thread.send(content=f"### {ctx.user.mention}, in caso di aggiunte, richieste o dubbi puoi chiedere qui ad un {role.mention}!", silent=True)
  
         reaction, user = await self.bot.wait_for('reaction_add') 
-        self.check_task = self.check.start(ctx,thread,role,reaction,user)
+        self.check_task = self.check.start(ctx, thread, role, reaction, user)
         
         async def bottone(ctx):
             view = BottoniApprovazione()
             await ctx.respond(view=view)
              
     @tasks.loop(seconds = 1)
-    async def check(self,ctx,thread,role,reaction,user):
+    async def check(self, ctx, thread, role, reaction, user):
         try:
             
             if((str(reaction.emoji) == '✅' and reaction.count >= len(role.members)//2 )): 
