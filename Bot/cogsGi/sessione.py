@@ -1,6 +1,7 @@
 # DA AGGIUNGERE I BOTTONI CON LA POSSIBILITà DI EDITARE E CANCELLARE OLTRE ALLE REAZIONI DI APPROVAZIONE
 
 import discord
+from discord.ui import View
 from discord import app_commands
 from discord.ext import commands, tasks
 import asyncio
@@ -8,21 +9,25 @@ import asyncio
 from datetime import datetime
 import dateparser
 
+from bottoni import BottoniApprovazione
+
 
 class Sessione(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
     
     @app_commands.command(name="sessione", description="Proponi una tua Sessione ai responsabili Trama & Lore!")
     @app_commands.guild_only()
     async def proposta_sessione(self, ctx: discord.Interaction):
-    
+        
         await ctx.response.defer(thinking=True, ephemeral=True)
     
         if not discord.utils.get(ctx.user.roles, name='Master'):
             await ctx.followup.send('Mi dispiace, ma solo un master può usare questo comando.', ephemeral=True)
             return
+        bottoni = BottoniApprovazione()
             
         def check(m):
             return m.author == ctx.user and m.channel == dm_channel
@@ -245,7 +250,7 @@ class Sessione(commands.Cog):
                 session_desc = ""
         
         message = await ctx.channel.send(embed=embed)
-
+        await ctx.send("Premi un bottone:", view=bottoni)
         # EMBED RISPOSTA
         embed = discord.Embed(title="La proposta di sessione è stata creata!",
                             description=f"[Clicca qui per visualizzare la proposta](<{message.jump_url}>)",
@@ -253,14 +258,12 @@ class Sessione(commands.Cog):
         
         await dm_channel.send(embed=embed)
 
-        role = discord.utils.get(ctx.guild.roles, name="Responsabile Trama & Lore")
+        role = discord.utils.get(ctx.guild.roles, name="Test")
 
         # THREAD CON REAZIONE
         thread = await message.create_thread(name=f"{sum(1 for i in ctx.channel.threads if ctx.user.name in i.name)+1}° Proposta di {ctx.user.name}")
         await thread.send(content=f"### {ctx.user.mention}, in caso di aggiunte, richieste o dubbi puoi chiedere qui ad un {role.mention}!", silent=True)
-        await message.add_reaction('✅')
-        await message.add_reaction('❌')
-
+ 
         reaction, user = await self.bot.wait_for('reaction_add') 
         self.check_task = self.check.start(ctx, thread, role, reaction, user)
         
@@ -279,6 +282,6 @@ class Sessione(commands.Cog):
                 
         except asyncio.TimeoutError:
                 return   
-                
+            
 async def setup(bot):
     await bot.add_cog(Sessione(bot))
