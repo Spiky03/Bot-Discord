@@ -253,7 +253,7 @@ class Sessione(commands.Cog):
         
         await dm_channel.send(embed=embed)
 
-        role = discord.utils.get(ctx.guild.roles, name="Responsabile Trama & Lore")
+        role = discord.utils.get(ctx.guild.roles, name="Test")
 
         # THREAD CON REAZIONE
         thread = await message.create_thread(name=f"{sum(1 for i in ctx.channel.threads if ctx.user.name in i.name)+1}° Proposta di {ctx.user.name}")
@@ -261,28 +261,20 @@ class Sessione(commands.Cog):
         await message.add_reaction('✅')
         await message.add_reaction('❌')
 
-        def check(reaction, user):
-            return (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌') and reaction.count >= len(role.members)//2
+       
+        self.checkin_task = self.checkin.start()
         
-        try:
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=60*60*24*7, check=check)  # 60 sec * 60 min * 24 hours * 7 days
-            if str(reaction.emoji) == '✅' and reaction.count >= reaction.count >= len(role.members)//2:
-                    await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione è stata approvata!')
-                    await thread.edit(archived=True)
-
-            elif str(reaction.emoji) == '❌' and reaction.count >= reaction.count >= len(role.members)//2:
-                await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione __NON__ è stata approvata.\nPer capirne le motivazioni, contattare un {role.mention} (anche in questo thread stesso).')
-
-        except asyncio.TimeoutError:
-            return
-        
-        # TRANSIZIONE NEL FORUM
-        for thread in self.bot.get_channel(1202563289377275924).threads:
-            # Controlla se il nome del thread contiene il nickname o il tag di chi ha inviato il messaggio
-            if ctx.user.nick in thread.name or ctx.user.name in thread.name:
-                # Invia il messaggio nel thread corrispondente
-                await thread.send(content=f'### {role.mention}', embed=embed)
-                break
-
+        @tasks.loop(seconds = 1)
+        async def checkin(reaction,user):
+          if((str(reaction.emoji) == '✅' and reaction.count >= len(role.members)//2 )): 
+                await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione è stata approvata!')
+                await thread.edit(archived=True)
+                self.checkin_task.cancel()
+                
+          elif  ((str(reaction.emoji) == '❌' and reaction.count >= len(role.members)//2)):
+              await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione __NON__ è stata approvata.\nPer capirne le motivazioni, contattare un cazzo (anche in questo thread stesso).')
+              self.checkin_task.cancel()
+              
+              
 async def setup(bot):
     await bot.add_cog(Sessione(bot))
