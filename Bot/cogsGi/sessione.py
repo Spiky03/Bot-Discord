@@ -16,10 +16,17 @@ class BottoniApprovazione(discord.ui.View):
          
     @discord.ui.button(label='Approva',style=discord.ButtonStyle.green)
     async def button_approve(self,interaction: discord.Interaction,button: discord.ui.Button):
-        await interaction.message.add_reaction('✅')
+        try:
+            await interaction.message.add_
+            await interaction.message.add_reaction('✅')
+            await interaction.response.send_message("Bravo")
+        except Exception as e: 
+            print(e)
+            
     @discord.ui.button(label='Disapprova',style=discord.ButtonStyle.red)  
     async def button_disapprove(self,interaction: discord.Interaction,button: discord.ui.Button):
-        await interaction.message.add_reaction('❌')  
+        await interaction.message.add_reaction('❌')
+        await interaction.response.send_message("Scemo")
         
 
 
@@ -259,8 +266,8 @@ class Sessione(commands.Cog):
                                 value=session_desc,
                                 inline=False)
                 session_desc = ""
-        
-        message = await ctx.channel.send(embed=embed)
+        view = BottoniApprovazione()
+        message = await ctx.channel.send(embed=embed,view=view)
         # EMBED RISPOSTA
         embed = discord.Embed(title="La proposta di sessione è stata creata!",
                             description=f"[Clicca qui per visualizzare la proposta](<{message.jump_url}>)",
@@ -277,10 +284,7 @@ class Sessione(commands.Cog):
         reaction, user = await self.bot.wait_for('reaction_add') 
         self.check_task = self.check.start(ctx, thread, role, reaction, user)
         
-        async def bottone(ctx):
-            view = BottoniApprovazione()
-            await ctx.respond(view=view)
-             
+   
     @tasks.loop(seconds = 1)
     async def check(self, ctx, thread, role, reaction, user):
         try:
