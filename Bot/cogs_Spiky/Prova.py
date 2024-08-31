@@ -1,7 +1,4 @@
-import sys
-sys.path.append(r'C:\Users\gagli\Documents\Bot-Discord\Bot\cogs_Spiky')
-
-from Bottoni import OkButton
+from cogsGi.Bottoni import OkButton
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
