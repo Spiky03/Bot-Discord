@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands, tasks
 from discord import app_commands
 from discord.ui import Button, View
-
+                   
 class OkButton(Button):
         def __init__(self, label, emoji="✅"):
             super().__init__(label=label, style=discord.ButtonStyle.blurple, emoji=emoji)
@@ -11,6 +11,7 @@ class OkButton(Button):
         async def callback(self, ctx: discord.Interaction):
             view: View = self.view
             app = view.app
+            dis = view.dis
             embed = view.embed
             role = view.role
                 
@@ -21,13 +22,11 @@ class OkButton(Button):
                 else:
                     app.append(ctx.user.display_name)
                 # RIMUOVE IL FIELD PER RIFARLO
-                embed.remove_field(-2)
-                embed.insert_field_at(-1, name="✅ Approvatori",
+                embed.remove_field(-1)
+                embed.add_field(name="✅ Approvatori",
                                 value=">>> " + ("\n".join(app) if len(app)!= 0 else "Nessuno"))
-                # MODIFICA L'EMBED CON UN FEEDBACK
+                # MODIFICA L'EMBED
                 await ctx.response.edit_message(embed=embed)
-                if ctx.user.display_name in app:
-                    await ctx.followup.send("Grazie dell'approvazione!", ephemeral=True)
                     
             else:
                 await ctx.response.send_message(f"Mi dispiace, ma non hai il ruolo {role.name}", ephemeral=True)
@@ -39,6 +38,7 @@ class NotOkButton(Button):
         
         async def callback(self, ctx: discord.Interaction):
             view: View = self.view
+            app = view.app
             dis = view.dis
             embed = view.embed
             role = view.role
@@ -46,6 +46,9 @@ class NotOkButton(Button):
             if discord.utils.get(ctx.user.roles, name=role.name):
                 if ctx.user.display_name in dis:
                     dis.remove(ctx.user.display_name)
+                elif ctx.user.display_name in app:
+                    app.remove(ctx.user.display_name)
+                    dis.append(ctx.user.display_name)
                 else:
                     dis.append(ctx.user.display_name)
                 
@@ -54,8 +57,6 @@ class NotOkButton(Button):
                                 value=">>> " + ("\n".join(dis) if len(dis)!= 0 else "Nessuno"))
                 
                 await ctx.response.edit_message(embed=embed)
-                if ctx.user.display_name in dis:
-                    await ctx.followup.send("Grazie della disapprovazione!", ephemeral=True)
                     
             else:
                 await ctx.response.send_message(f"Mi dispiace, ma non hai il ruolo {role.name}", ephemeral=True)
