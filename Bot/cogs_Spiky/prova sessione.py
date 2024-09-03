@@ -9,7 +9,7 @@ import asyncio
 import sys
 sys.path.append(r'C:\Users\gagli\Documents\Bot-Discord\Bot\cogs_Spiky')
 
-from Buttons import OkButton, NotOkButton
+from Buttons import OkButton, EditButton
 
 from datetime import datetime
 import dateparser
@@ -218,17 +218,21 @@ class Sessione(commands.Cog):
                             color=color)
         embed.set_author(name=ctx.user.display_name, icon_url=ctx.user.display_avatar.url)
         embed.set_footer(text=str(datetime.today().strftime('%d/%m/%Y %H:%M')))
-
+        
+        embed.add_field(name="Tipologia",
+                        value=session_types,
+                        inline=False)
+        
         if session_date:
             session_date = int(date.timestamp())
             embed.add_field(name="Data",
                             value=f"<t:{session_date}:f>",
-                            inline=False)
-        
-        embed.add_field(name="Tipologia",
-                        value=session_types,
-                        inline=True)
-        
+                            inline=True)
+        else:
+            embed.add_field(name="Data",
+                            value="Nessuna",
+                            inline=True)
+
         embed.add_field(name="Restrizione/i",
                         value=session_res,
                         inline=True)
@@ -238,43 +242,35 @@ class Sessione(commands.Cog):
                         inline=True)
         
         embed.add_field(name="Descrizione della Sessione",
-                        value="")
+                        value=session_desc[:1024],
+                        inline=False)
         
-        while len(session_desc) > 0:
-            if len(session_desc) > 1024:
-                embed.add_field(name="",
-                                value=session_desc[:1024],
-                                inline=False)
-                session_desc = session_desc[1024:]
-            else:
-                embed.add_field(name="",
-                                value=session_desc,
-                                inline=False)
-                session_desc = ""
+        while len(session_desc) > 1024:
+            session_desc = session_desc[1024:]
+            embed.add_field(name="",
+                            value=session_desc[:1024],
+                            inline=False)
         
         embed.add_field(name="✅ Approvatori",
                         value=">>> Nessuno",
                         inline=True)
         
-        embed.add_field(name="❌ Disapprovatori",
-                        value=">>> Nessuno",
-                        inline=True)
-        
         view = View(timeout=None)
-        view.add_item(OkButton(label="Approvato")) 
-        view.add_item(NotOkButton(label="Non approvato"))
+        view.add_item(OkButton(label="Approvato"))
+        view.add_item(EditButton())
         view.app = []
-        view.dis = []
         view.embed = embed
         view.role = role
+        view.color = color
+        
         message = await self.bot.get_channel(1213887077511336017).send(embed=embed, view=view)
 
         # EMBED RISPOSTA
-        embed = discord.Embed(title="La proposta di sessione è stata creata!",
+        embedR = discord.Embed(title="La proposta di sessione è stata creata!",
                             description=f"[Clicca qui per visualizzare la proposta](<{message.jump_url}>)",
                             color=color)
         
-        await dm_channel.send(embed=embed)
+        await dm_channel.send(embed=embedR)
 
         
 
@@ -283,7 +279,7 @@ class Sessione(commands.Cog):
         await thread.send(content=f"### {ctx.user.mention}, in caso di aggiunte, richieste o dubbi puoi chiedere qui ad un {role.mention}!", silent=True)
 
         def check(view, role):
-            return len(view.app) == len(role.members)//2 or len(view.dis) == len(role.members)//2
+            return len(view.app) == len(role.members)//2
         
         try:
             reaction, user = await self.bot.wait_for('reaction_add', timeout=60*60*24*7, check=check)  # 60 sec * 60 min * 24 hours * 7 days
