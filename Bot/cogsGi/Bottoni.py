@@ -1,7 +1,6 @@
 import discord
-from discord.ext import commands, tasks
-from discord import app_commands
 from discord.ui import Button, View
+from discord.ext import commands
 
 class OkButton(Button):
         def __init__(self, label, emoji="✅"):
@@ -24,10 +23,8 @@ class OkButton(Button):
                 embed.remove_field(-2)
                 embed.insert_field_at(-1, name="✅ Approvatori",
                                 value=">>> " + ("\n".join(app) if len(app)!= 0 else "Nessuno"))
-                # MODIFICA L'EMBED CON UN FEEDBACK
+                # MODIFICA L'EMBED
                 await ctx.response.edit_message(embed=embed)
-                if ctx.user.display_name in app:
-                    await ctx.followup.send("Grazie dell'approvazione!", ephemeral=True)
                     
             else:
                 await ctx.response.send_message(f"Mi dispiace, ma non hai il ruolo {role.name}", ephemeral=True)
@@ -54,45 +51,14 @@ class NotOkButton(Button):
                                 value=">>> " + ("\n".join(dis) if len(dis)!= 0 else "Nessuno"))
                 
                 await ctx.response.edit_message(embed=embed)
-                if ctx.user.display_name in dis:
-                    await ctx.followup.send("Grazie della disapprovazione!", ephemeral=True)
                     
             else:
                 await ctx.response.send_message(f"Mi dispiace, ma non hai il ruolo {role.name}", ephemeral=True)
                 
+class Buttons(commands.Cog):
 
-class Bottone(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
-    @app_commands.command(name="bottone", description="Crea un bottone")
-    async def button(self, ctx: discord.Interaction):
-        
-        # CREA L'EMBED BASE
-        embed = discord.Embed(title="Titolo",
-                              description=f"Descrizione dell'embed",
-                              color=0xFFFF00)
-        
-        embed.add_field(name="✅ Approvatori",
-                        value=">>> Nessuno")
-        embed.add_field(name="❌ Disapprovatori",
-                        value=">>> Nessuno")
 
-        # CREA I BOTTONI PRESI DALLE CLASSI
-        buttonApp = OkButton(label="Approva!")
-        buttonDis = NotOkButton(label="Disapprova!")
-        
-        # CREA IL VIEW AGGIUNGENDOCI BOTTONI E VARIABILI
-        view = View(timeout=None)
-        view.add_item(buttonApp) 
-        view.add_item(buttonDis)
-        view.app = []
-        view.dis = []
-        view.embed = embed
-        
-        # INVIA IL MESSAGGIO CON BOTTONI E EMBED ASSIEME
-        await ctx.response.send_message(view=view, embed=embed)
-        
-            
 async def setup(bot):
-    await bot.add_cog(Bottone(bot))
+    await bot.add_cog(Buttons(bot))
