@@ -11,7 +11,7 @@ import dateparser
 import sys
 sys.path.append(r'F:\cose che dovrebbero stare sul dextop\Bot-Discord\Bot\cogsGi')
 
-from Bottoni import OkButton, NotOkButton
+from Bottoni import OkButton, EditButton
 
 
 
@@ -52,7 +52,7 @@ class Sessione(commands.Cog):
                 output_string += f"**{key}**. {value}\n"
             return output_string
         
-        timeout = 600.0   
+        timeout = 3600.0  
     # TIPO
         session_types = {'1':'Vocale', '2': 'Play by Chat', '3': 'Live'}
         embed = discord.Embed(title="Seleziona il tipo di Sessione",
@@ -258,36 +258,35 @@ class Sessione(commands.Cog):
                         value=">>> Nessuno",
                         inline=True)
         
-        embed.add_field(name="❌ Disapprovatori",
-                        value=">>> Nessuno",
-                        inline=True)
-        
+    
         view = View(timeout=None)
         view.add_item(OkButton(label="Approvato")) 
-        view.add_item(NotOkButton(label="Non approvato"))
+        view.add_item(EditButton(self.bot,label="Modifica"))
         view.app = []
-        view.dis = []
+        view.color = color
         view.embed = embed
         view.role = role
         message = await self.bot.get_channel(1213887077511336017).send(embed=embed, view=view)
-
+        print(len(view.app))
         # EMBED RISPOSTA
         embed = discord.Embed(title="La proposta di sessione è stata creata!",
                             description=f"[Clicca qui per visualizzare la proposta](<{message.jump_url}>)",
                             color=color)
         
         await dm_channel.send(embed=embed)
-
+        
         
 
         # THREAD CON BOTTONI
         thread = await message.create_thread(name=f"{sum(1 for i in ctx.channel.threads if ctx.user.name in i.name)+1}° Proposta di {ctx.user.name}")
         await thread.send(content=f"### {ctx.user.mention}, in caso di aggiunte, richieste o dubbi puoi chiedere qui ad un {role.mention}!", silent=True)
-   
+        
+        
     @tasks.loop(seconds = 1)
-    async def check(self, ctx, thread, role, reaction, view,user):
+    async def check(self, ctx, thread, role, reaction, view, user):
+        
         try:
-            
+            print(len(view.app))
             if((len(view.app) >= len(role.members)//2 )): 
                 await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione è stata approvata!')
                 await thread.edit(archived=True)
