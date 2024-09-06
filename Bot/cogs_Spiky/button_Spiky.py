@@ -13,55 +13,54 @@ class EditButton(Button):
         async def callback(self, ctx: discord.Interaction):
             view: View = self.view
             color = view.color
-            embed = view.embed
-            embedDict = embed.to_dict()
+            embedOld = view.embed
+            embedDict = embedOld.to_dict()
             
-            print(embedDict) #DA RIMUOVERE
+            print(embedDict) # DA RIMUOVERE
                 
-            if embed.author.name == ctx.user.display_name:
-                
-                def check(m):
-                    return m.author == ctx.user and m.channel == dm_channel
-        
-                dm_channel = await ctx.user.create_dm()
-                
-                embed = discord.Embed(title="Che cosa vorresti modificare?",
-                            description='',
-                            color=color)
-                
-                embed.set_footer(text="Inserisci un numero per selezionare una opzione\nPer annullare, digita 'cancel'")
-                
-                for n, field in enumerate(embedDict['fields'][:-1]):
-                    if field['name'] != "":
-                        
-                        if field['name'] == 'Data':
-                            value = datetime.fromtimestamp(int(field['value'][3:-3])).strftime('%a %d %b %Y %H:%M') # Cambio formato data
-                            translations = {
-                                            'Mon': 'lun', 'Tue': 'mar', 'Wed': 'mer', 'Thu': 'gio', 'Fri': 'ven', 'Sat': 'sab', 'Sun': 'dom',
-                                            'Jan': 'gen', 'Feb': 'feb', 'Mar': 'mar', 'Apr': 'apr', 'May': 'mag', 'Jun': 'giu',
-                                            'Jul': 'lug', 'Aug': 'ago', 'Sep': 'set', 'Oct': 'ott', 'Nov': 'nov', 'Dec': 'dic'
-                                            }
+            if embedOld.author.name != ctx.user.display_name:
+                await ctx.response.send_message(f"Mi dispiace, ma non sei il creatore di questa proposta", ephemeral=True)
+                return
+            
+            dm_channel = await ctx.user.create_dm()
+            
+            embed = discord.Embed(title="Che cosa vorresti modificare?",
+                        description='',
+                        color=color)
+            
+            embed.set_footer(text="Inserisci un numero per selezionare una opzione\nPer annullare, digita 'cancel'")
+            
+            for n, field in enumerate(embedDict['fields'][:-1]):
+                if field['name'] != "":
+                    
+                    if field['name'] == 'Data' and field['value'] != 'Nessuna':
+                        value = datetime.fromtimestamp(int(field['value'][3:13])).strftime('%a %d %b %Y %H:%M') # Cambio formato data
+                        translations = {'Mon': 'lun', 'Tue': 'mar', 'Wed': 'mer', 'Thu': 'gio', 'Fri': 'ven', 'Sat': 'sab', 'Sun': 'dom',
+                                        'Jan': 'gen', 'Feb': 'feb', 'Mar': 'mar', 'Apr': 'apr', 'May': 'mag', 'Jun': 'giu',
+                                        'Jul': 'lug', 'Aug': 'ago', 'Sep': 'set', 'Oct': 'ott', 'Nov': 'nov', 'Dec': 'dic'}
 
-                            for eng, ita in translations.items():
-                                value = value.replace(eng, ita)
-                        
-                        elif len(field['value']) < 800: # Spezzo descrizioni lunghe
-                            value = field['value']
-                        
-                        else:
-                            value = field['value'][:797] + '...'
+                        for eng, ita in translations.items():
+                            value = value.replace(eng, ita)
+                    
+                    elif len(field['value']) < 800: # Spezzo descrizioni lunghe
+                        value = field['value']
+                    
+                    else:
+                        value = field['value'][:797] + '...'
 
-                        
-                        embed.add_field(
-                                        name=f"{n+1} - {field['name']}",
-                                        value=f"```{value}```",
-                                        inline="False" if n in [0, 4] else "True")
-                
-                await ctx.response.send_message(embed=discord.Embed(title="Modifica la tua Sessione!",
-                                                    description=f"Ti ho inviato un [messaggio diretto](<{ctx.user.dm_channel.jump_url}>) con i passaggi successivi.",
-                                                    color=color), ephemeral=True)
-                
-                await dm_channel.send(embed=embed)
+                    
+                    embed.add_field(
+                                    name=f"{n+1} - {field['name']}",
+                                    value=f"```{value}```",
+                                    inline="False" if n not in [0, 1, 2] else "True")
+            
+            await ctx.response.send_message(embed=discord.Embed(title="Modifica la tua Sessione!",
+                                                description=f"Ti ho inviato un [messaggio diretto](<{ctx.user.dm_channel.jump_url}>) con i passaggi successivi.",
+                                                color=color), ephemeral=True)
+            
+            await dm_channel.send(embed=embed)
+            
+            
 
 class OkButton(Button):
         def __init__(self, label, emoji="✅"):
@@ -82,10 +81,16 @@ class OkButton(Button):
                     app.append(ctx.user.display_name)
                 # RIMUOVE IL FIELD PER RIFARLO
                 embed.remove_field(-1)
-                embed.add_field(name=f"✅ Approvatori ({len(app)})",
-                                value=">>> " + ("\n".join(app) if len(app)!= 0 else "Nessuno"))
+                embed.add_field(name=f"✅ Approvatori{' (' + str(len(app)) + ')' if len(app) != 0 else ''}",
+                                value=(">>> " + "\n".join(app)) if len(app)!= 0 else "-")
+                # CHECK APPROVAZIONE
+                if len(app) == len(role.members)//2:
+                    view=View()
+                    embed.add_field(name="",
+                                    value="## APPROVATA! ✅")                    
+                
                 # MODIFICA L'EMBED
-                await ctx.response.edit_message(embed=embed)
+                await ctx.response.edit_message(embed=embed, view=view)
                     
             else:
                 await ctx.response.send_message(f"Mi dispiace, ma non hai il ruolo {role.name}", ephemeral=True)
