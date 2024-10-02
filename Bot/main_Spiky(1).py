@@ -24,10 +24,16 @@ async def sync(ctx):
 async def on_ready():
     
     # COGS
-    for file in os.listdir(r"C:\Users\gagli\Documents\Bot-Discord\Bot\cogs_Spiky"):
-        if file.endswith(".py"):
-            await bot.load_extension(f"cogs_Spiky.{file[:-3]}")
+    try:
+        for file in os.listdir(r"C:\Users\gagli\Documents\Bot-Discord\Bot\cogs_Spiky"):
+            if file.endswith(".py"):
+                await bot.load_extension(f"cogs_Spiky.{file[:-3]}")
 
+    except:
+        for file in os.listdir(r"C:\Users\hp\Desktop\Bot-Discord\Bot\cogs_Spiky"):
+            if file.endswith(".py"):
+                await bot.load_extension(f"cogs_Spiky.{file[:-3]}")
+                
     try:
         synced = await bot.tree.sync()
         print('Connesso a ' + str(len(synced)) + ' comando/i')

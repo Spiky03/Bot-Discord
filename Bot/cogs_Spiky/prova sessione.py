@@ -6,10 +6,12 @@ from discord.ext import commands, tasks
 from discord.ui import Button, View
 import asyncio
 
+import os
 import sys
-sys.path.append(r'C:\Users\gagli\Documents\Bot-Discord\Bot\cogs_Spiky')
 
-from Buttons import OkButton, EditButton
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'cogs_Spiky'))
+    
+from button_Spiky import OkButton, EditButton
 
 from datetime import datetime
 import dateparser
@@ -221,17 +223,7 @@ class Sessione(commands.Cog):
         
         embed.add_field(name="Tipologia",
                         value=session_types,
-                        inline=False)
-        
-        if session_date:
-            session_date = int(date.timestamp())
-            embed.add_field(name="Data",
-                            value=f"<t:{session_date}:f>",
-                            inline=True)
-        else:
-            embed.add_field(name="Data",
-                            value="Nessuna",
-                            inline=True)
+                        inline=True)
 
         embed.add_field(name="Restrizione/i",
                         value=session_res,
@@ -251,8 +243,18 @@ class Sessione(commands.Cog):
                             value=session_desc[:1024],
                             inline=False)
         
+        if session_date:
+            session_date = int(date.timestamp())
+            embed.add_field(name="Data",
+                            value=f"<t:{session_date}:F>\n:clock2: <t:{session_date}:R>",
+                            inline=False)
+        else:
+            embed.add_field(name="Data",
+                            value="Nessuna",
+                            inline=False)
+        
         embed.add_field(name="✅ Approvatori",
-                        value=">>> Nessuno",
+                        value="-",
                         inline=True)
         
         view = View(timeout=None)
@@ -282,7 +284,7 @@ class Sessione(commands.Cog):
             return len(view.app) == len(role.members)//2
         
         try:
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=60*60*24*7, check=check)  # 60 sec * 60 min * 24 hours * 7 days
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=None, check=check)  # 60 sec * 60 min * 24 hours * 7 days
             if str(reaction.emoji) == '✅' and reaction.count >= reaction.count >= len(role.members)//2:
                     await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione è stata approvata!')
                     await thread.edit(archived=True)

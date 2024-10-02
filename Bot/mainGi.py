@@ -24,7 +24,7 @@ async def sync(ctx):
 async def on_ready():
     
     # COGS
-    for file in os.listdir(r"C:\Users\Guest17\OneDrive\Documenti\Bot-Discord\Bot\cogsGi"):
+    for file in os.listdir(r"F:\cose che dovrebbero stare sul dextop\Bot-Discord\Bot\cogsGi"):
         if file.endswith(".py"):
             await bot.load_extension(f"cogsGi.{file[:-3]}")
 

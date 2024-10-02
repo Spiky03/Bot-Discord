@@ -1,51 +1,38 @@
 # DA AGGIUNGERE I BOTTONI CON LA POSSIBILITà DI EDITARE E CANCELLARE OLTRE ALLE REAZIONI DI APPROVAZIONE
 
 import discord
-from discord.ui import View
 from discord import app_commands
 from discord.ext import commands, tasks
+from discord.ui import Button, View
 import asyncio
-
 from datetime import datetime
 import dateparser
 
-class BottoniApprovazione(discord.ui.View):
-    def __init__(self) -> None:
-        super().__init__(timeout=None)
-        
-         
-    @discord.ui.button(label='Approva',style=discord.ButtonStyle.green)
-    async def button_approve(self,interaction: discord.Interaction,button: discord.ui.Button):
-        try:
-            await interaction.message.add_
-            await interaction.message.add_reaction('✅')
-            await interaction.response.send_message("Bravo")
-        except Exception as e: 
-            print(e)
-            
-    @discord.ui.button(label='Disapprova',style=discord.ButtonStyle.red)  
-    async def button_disapprove(self,interaction: discord.Interaction,button: discord.ui.Button):
-        await interaction.message.add_reaction('❌')
-        await interaction.response.send_message("Scemo")
-        
+import sys
+sys.path.append(r'F:\cose che dovrebbero stare sul dextop\Bot-Discord\Bot\cogsGi')
+
+from Bottoni import OkButton, EditButton
+
+
 
 
 class Sessione(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-
     
     @app_commands.command(name="sessione", description="Proponi una tua Sessione ai responsabili Trama & Lore!")
     @app_commands.guild_only()
     async def proposta_sessione(self, ctx: discord.Interaction):
+        
+        # RUOLO D'APPROVATORE
+        role = discord.utils.get(ctx.guild.roles, name="Test")
         
         await ctx.response.defer(thinking=True, ephemeral=True)
     
         if not discord.utils.get(ctx.user.roles, name='Master'):
             await ctx.followup.send('Mi dispiace, ma solo un master può usare questo comando.', ephemeral=True)
             return
-        
             
         def check(m):
             return m.author == ctx.user and m.channel == dm_channel
@@ -65,7 +52,7 @@ class Sessione(commands.Cog):
                 output_string += f"**{key}**. {value}\n"
             return output_string
         
-        timeout = 600.0   
+        timeout = 3600.0  
     # TIPO
         session_types = {'1':'Vocale', '2': 'Play by Chat', '3': 'Live'}
         embed = discord.Embed(title="Seleziona il tipo di Sessione",
@@ -266,38 +253,46 @@ class Sessione(commands.Cog):
                                 value=session_desc,
                                 inline=False)
                 session_desc = ""
-        view = BottoniApprovazione()
-        message = await ctx.channel.send(embed=embed,view=view)
+        
+        embed.add_field(name="✅ Approvatori",
+                        value=">>> Nessuno",
+                        inline=True)
+        
+    
+        view = View(timeout=None)
+        view.add_item(OkButton(label="Approvato")) 
+        view.add_item(EditButton(self.bot,label="Modifica"))
+        view.app = []
+        view.color = color
+        view.embed = embed
+        view.role = role
+        message = await self.bot.get_channel(1213887077511336017).send(embed=embed, view=view)
+        print(len(view.app))
         # EMBED RISPOSTA
         embed = discord.Embed(title="La proposta di sessione è stata creata!",
                             description=f"[Clicca qui per visualizzare la proposta](<{message.jump_url}>)",
                             color=color)
         
         await dm_channel.send(embed=embed)
+        
+        
 
-        role = discord.utils.get(ctx.guild.roles, name="Test")
-
-        # THREAD CON REAZIONE
+        # THREAD CON BOTTONI
         thread = await message.create_thread(name=f"{sum(1 for i in ctx.channel.threads if ctx.user.name in i.name)+1}° Proposta di {ctx.user.name}")
         await thread.send(content=f"### {ctx.user.mention}, in caso di aggiunte, richieste o dubbi puoi chiedere qui ad un {role.mention}!", silent=True)
- 
-        reaction, user = await self.bot.wait_for('reaction_add') 
-        self.check_task = self.check.start(ctx, thread, role, reaction, user)
         
-   
+        
     @tasks.loop(seconds = 1)
-    async def check(self, ctx, thread, role, reaction, user):
+    async def check(self, ctx, thread, role, reaction, view, user):
+        
         try:
-            
-            if((str(reaction.emoji) == '✅' and reaction.count >= len(role.members)//2 )): 
+            print(len(view.app))
+            if((len(view.app) >= len(role.members)//2 )): 
                 await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione è stata approvata!')
                 await thread.edit(archived=True)
                 self.check_task.cancel()
             
-            elif  ((str(reaction.emoji) == '❌' and reaction.count >= len(role.members)//2)):
-                await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione __NON__ è stata approvata.\nPer capirne le motivazioni, contattare un {role.mention} (anche in questo thread stesso).')
-                self.check_task.cancel()
-                
+        
         except asyncio.TimeoutError:
                 return   
             
