@@ -11,7 +11,7 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'cogs_Spiky'))
     
-from button_Spiky import OkButton, EditButton
+from button_Spiky import OkButton, EditButton, default, tipo, num, restr, desc, data 
 
 from datetime import datetime
 import dateparser
@@ -65,7 +65,6 @@ class Sessione(commands.Cog):
             while True:
                 msg = await self.bot.wait_for('message', check=check, timeout=timeout)
                 if msg.content.lower() == 'cancella':
-                    await ctx.channel.purge(limit=1)
                     await dm_channel.send('Sessione cancellata.')
                     return
                 elif msg.content in session_types.keys():
@@ -137,7 +136,6 @@ class Sessione(commands.Cog):
         
         
     # DATA
-        session_date = True
         embed = discord.Embed(title="Quando inizierà  la Sessione?",
                             description="Digita `None` se non ha una data.\n\n> Venerdì 21.00\n> Domani 18.00\n> Ora\n> Tra 1 ora\n> AAAA-MM-GG 19.00",
                             color=color)
@@ -279,21 +277,24 @@ class Sessione(commands.Cog):
         # THREAD CON BOTTONI
         thread = await message.create_thread(name=f"{sum(1 for i in ctx.channel.threads if ctx.user.name in i.name)+1}° Proposta di {ctx.user.name}")
         await thread.send(content=f"### {ctx.user.mention}, in caso di aggiunte, richieste o dubbi puoi chiedere qui ad un {role.mention}!", silent=True)
-
-        def check(view, role):
-            return len(view.app) == len(role.members)//2
         
+        self.message = message
+        self.user = ctx.user
+        self.view = view
+        self.role = role
+        self.thread = thread
+        self.approve_task = self.approve.start()
+        
+    @tasks.loop(seconds = 1)
+    async def approve(self):
         try:
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=None, check=check)  # 60 sec * 60 min * 24 hours * 7 days
-            if str(reaction.emoji) == '✅' and reaction.count >= reaction.count >= len(role.members)//2:
-                    await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione è stata approvata!')
-                    await thread.edit(archived=True)
-
-            elif str(reaction.emoji) == '❌' and reaction.count >= reaction.count >= len(role.members)//2:
-                await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione __NON__ è stata approvata.\nPer capirne le motivazioni, contattare un {role.mention} (anche in questo thread stesso).')
-
+            if((len(self.view.app) >= len(self.role.members)//2 )): 
+                await self.thread.send(f'### {self.user.mention}, la tua Sessione è stata approvata! ✅\nRicorda di postarla su <#1206935673806782524>.')
+                await self.thread.edit(archived=True)
+                self.approve_task.cancel()
+        
         except asyncio.TimeoutError:
-            return
-
+                return
+            
 async def setup(bot):
     await bot.add_cog(Sessione(bot))
