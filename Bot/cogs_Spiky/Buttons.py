@@ -36,11 +36,9 @@ class EditButton(Button):
                         
                         if field['name'] == 'Data':
                             value = datetime.fromtimestamp(int(field['value'][3:-3])).strftime('%a %d %b %Y %H:%M') # Cambio formato data
-                            translations = {
-                                            'Mon': 'lun', 'Tue': 'mar', 'Wed': 'mer', 'Thu': 'gio', 'Fri': 'ven', 'Sat': 'sab', 'Sun': 'dom',
+                            translations = {'Mon': 'lun', 'Tue': 'mar', 'Wed': 'mer', 'Thu': 'gio', 'Fri': 'ven', 'Sat': 'sab', 'Sun': 'dom',
                                             'Jan': 'gen', 'Feb': 'feb', 'Mar': 'mar', 'Apr': 'apr', 'May': 'mag', 'Jun': 'giu',
-                                            'Jul': 'lug', 'Aug': 'ago', 'Sep': 'set', 'Oct': 'ott', 'Nov': 'nov', 'Dec': 'dic'
-                                            }
+                                            'Jul': 'lug', 'Aug': 'ago', 'Sep': 'set', 'Oct': 'ott', 'Nov': 'nov', 'Dec': 'dic'}
 
                             for eng, ita in translations.items():
                                 value = value.replace(eng, ita)
