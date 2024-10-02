@@ -37,7 +37,7 @@ class Sessione(commands.Cog):
         def check(m):
             return m.author == ctx.user and m.channel == dm_channel
         
-        dm_channel = await ctx.user.create_dm()
+    
         
         footer = "Inserisci un numero per selezionare una opzione\nPer annullare, digita 'cancella'"
         color = 0xFFFF00
