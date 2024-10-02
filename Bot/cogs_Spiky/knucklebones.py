@@ -77,95 +77,102 @@ class Knucklebones(commands.Cog):
             await ctx.response.send_message('_Le parole dei Tavernieri rimbombano:_\n"C\'è un luogo e un momento per ogni cosa! Ma non qui." ', ephemeral=True)
             return
 
-    class MyView(View):
-            def __init__(self, p1, p2, ctx):
-                super().__init__(timeout=300)
-                self.p1 = p1
-                self.p2 = p2
-                self.ctx = ctx
-            
-            async def on_timeout(self):
-                await self.ctx.edit_original_response(content=f"_Mi dispiace {self.p1.mention}, ma la tua proposta di sfida è stata ignorata..._", embed=None, view=None)
-                await asyncio.sleep(10)
-                await self.ctx.delete_original_response()
+        class MyView(View):
+                def __init__(self, p1, p2, ctx):
+                    super().__init__(timeout=300)
+                    self.p1 = p1
+                    self.p2 = p2
+                    self.ctx = ctx
                 
-    class MyButton(Button):
-        def __init__(self):
-            super().__init_()
+                async def on_timeout(self):
+                    await self.ctx.edit_original_response(content=f"_Mi dispiace {self.p1.mention}, ma la tua proposta di sfida è stata ignorata..._", embed=None, view=None)
+                    await asyncio.sleep(10)
+                    await self.ctx.delete_original_response()
+        
+        class acceptButton(Button):
+            def __init__(self):
+                    super().__init__(label="Accetto", style=discord.ButtonStyle.green)
+                    
+            async def accept_callback(ctx: discord.Interaction):
+                channel = self.bot.get_channel(channel_id)
+
+                if channel is None:
+                    await ctx.response.send_message("Canale non trovato.", ephemeral=True)
+                    return
+
+                timeout = 20.0
+
+                griglia1 = griglia2 = [
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [0, 0, 0]
+                ]
+
+                pt1 = pt2 = 0
+
+                def griglie():
+                    nonlocal p1, p2, griglia1, griglia2, pt1, pt2
+                    embed1 = discord.Embed(color=discord.Color.dark_blue())
+                    embed1.add_field(name=p1.display_name,
+                                    value=f"{'👑' if pt1 > pt2 else ''} {pt1} Punt{'i' if pt1 != 1 else 'o'}\n" + converti(griglia1, True),
+                                    inline=False)
+                    embed2 = discord.Embed(color=discord.Color.dark_red())
+                    embed2.add_field(name="",
+                                    value=converti(griglia2, False),
+                                    inline=False)
+                    embed2.add_field(name=p2.display_name,
+                                    value=f"{'👑' if pt2 > pt1 else ''} {pt2} Punt{'i' if pt1 != 1 else 'o'}\n",
+                                    inline=False)
+                    embed2.set_footer(text="By Spiky03 per Borgo Altrove!")
+
+                    return [embed1, embed2]
+
+                view=MyView(p1, p2, ctx)
+                view.add_item(resa)
+                view.add_item(tiraButton)
+                
+                msg = await channel.send(embeds=griglie())
+                
+                embed = discord.Embed(title="Hai accettato la sfida a **Knucklebones**", description=f"[Vai alla sfida!](<{msg.jump_url}>)")
+                await ctx.response.send_message(embed=embed, ephemeral=True)
+
+                # Inizio dei giochi
+                embed = discord.Embed(
+                    title=f"{p2.display_name} è tuo turno!", 
+                    description="Scegli cosa fare!",
+                    color=discord.Color.dark_red()
+                )
+                embed.set_author(name=p2.display_name,
+                                icon_url=p2.avatar)
+                msg = await channel.send(embed=embed, view=view)
+                
+                class tiraButton(Button):
+                    def __init__(self):
+                        super().__init__(label="Tira!", style=discord.ButtonStyle.blurple)
+                        self.msg = msg
+                    
+                    async def tira_callback():
+                        embed = discord.Embed(
+                            title=f"Prova",
+                            description=f"Prova",
+                            color=discord.Color.dark_red()
+                        )
+                        msg.edit(embed=embed)
+            
         p1 = ctx.user
         embed_sfida = discord.Embed(title=f"Sei stato sfidato da {p1.display_name} in una partita di **Knucklebones**!", description="### __Accetterai la sfida?__", color=discord.Color.yellow())
 
-        accept = Button(label="Accetto", style=discord.ButtonStyle.green)
+        accept = acceptButton
         refuse = Button(label="Rifiuto", style=discord.ButtonStyle.red)
-        tira = Button(label="Tira", style=discord.ButtonStyle.blurple)
         resa = Button(label="Resa", style=discord.ButtonStyle.gray)
- 
-        async def accept_callback(ctx: discord.Interaction):
-            channel = self.bot.get_channel(channel_id)
-
-            if channel is None:
-                await ctx.response.send_message("Canale non trovato.", ephemeral=True)
-                return
-
-            timeout = 20.0
-
-            griglia1 = griglia2 = [
-                [0, 0, 0],
-                [0, 0, 0],
-                [0, 0, 0]
-            ]
-
-            pt1 = pt2 = 0
-
-            def griglie():
-                nonlocal p1, p2, griglia1, griglia2, pt1, pt2
-                embed1 = discord.Embed(color=discord.Color.dark_blue())
-                embed1.add_field(name=p1.display_name,
-                                 value=f"{'👑' if pt1 > pt2 else ''} {pt1} Punt{'i' if pt1 != 1 else 'o'}\n" + converti(griglia1, True),
-                                 inline=False)
-                embed2 = discord.Embed(color=discord.Color.dark_red())
-                embed2.add_field(name="",
-                                 value=converti(griglia2, False),
-                                 inline=False)
-                embed2.add_field(name=p2.display_name,
-                                 value=f"{'👑' if pt2 > pt1 else ''} {pt2} Punt{'i' if pt1 != 1 else 'o'}\n",
-                                 inline=False)
-                embed2.set_footer(text="By Spiky03 per Borgo Altrove!")
-
-                return [embed1, embed2]
-
-            view=MyView(p1, p2, ctx)
-            view.add_item(resa)
-            view.add_item(tira)
-            
-            msg = await channel.send(embeds=griglie())
-            
-            embed = discord.Embed(title="Hai accettato la sfida a **Knucklebones**", description=f"[Vai alla sfida!](<{msg.jump_url}>)")
-            await ctx.response.send_message(embed=embed, ephemeral=True)
-
-            # Inizio dei giochi
-            embed = discord.Embed(title=f"{p2.display_name} è tuo turno!", 
-                                  description="Scegli cosa fare!",
-                                  color=discord.Color.dark_red())
-            embed.set_author(name=p2.display_name,
-                             icon_url=p2.avatar)
-            msg = await channel.send(embed=embed, view=view)
-
-        async def tira_callback(ctx: discord.Interaction):
-            
-            pass
-            
-            
-        
+                  
         async def resa_callback(ctx: discord.Interaction):
             pass
         
         async def refuse_callback(ctx: discord.Interaction):
             await ctx.response.send_message("Suca")
-            
-        accept.callback = accept_callback
+
         refuse.callback = refuse_callback
-        tira.callback = tira_callback
         resa.callback = resa_callback
 
         # Utilizzo della view

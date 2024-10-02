@@ -33,7 +33,9 @@ class Sessione(commands.Cog):
         if not discord.utils.get(ctx.user.roles, name='Master'):
             await ctx.followup.send('Mi dispiace, ma solo un master può usare questo comando.', ephemeral=True)
             return
-            
+        
+        dm_channel = await ctx.user.create_dm()
+        
         def check(m):
             return m.author == ctx.user and m.channel == dm_channel
         
