@@ -329,7 +329,7 @@ class NotOkButton(Button):
                     
             else:
                 await ctx.response.send_message(f"Mi dispiace, ma non hai il ruolo {role.name}", ephemeral=True)
-                
+            
 class Buttons(commands.Cog):
 
     def __init__(self, bot):

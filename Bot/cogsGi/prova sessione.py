@@ -11,7 +11,7 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'cogs_Spiky'))
     
-from button_Spiky import OkButton, EditButton, default, tipo, num, restr, desc, data 
+from Bot.cogs_Spiky.button_Spiky import OkButton, EditButton, default, tipo, num, restr, desc, data 
 
 from datetime import datetime
 import dateparser
