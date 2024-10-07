@@ -260,6 +260,24 @@ def griglie(p1, p2, griglia1, griglia2, pt1, pt2):
 
             return [embed1, embed2]
         
+def pt(griglie):
+    punteggi = []
+    for griglia in griglie:
+        punteggio = 0
+        for c in range(3):
+            col_vals = [griglia[r][c] for r in range(3)]
+            for val in set(col_vals):
+                if val != 0:
+                    count = col_vals.count(val)
+                    if count == 1:
+                        punteggio += val
+                    elif count == 2:
+                        punteggio += val * 4
+                    elif count == 3:
+                        punteggio += val * 9
+        punteggi.append(punteggio)
+    return punteggi
+        
 class EditButton(Button):
         def __init__(self, label="Modifica"):
             super().__init__(label=label, style=discord.ButtonStyle.blurple)
@@ -457,59 +475,86 @@ class acceptButton(Button):
             
     async def callback(self, ctx: discord.Interaction):
         view: KnucklebonesView = self.view
-        p1 = view.p1
-        p2 = view.p2
         channel = view.channel
+        view.stop()
         
-        timeout = 300.0
-        
-        view = KnucklebonesView(p1, p2, channel, timeout=timeout)
+        view = KnucklebonesView(view.p1, view.p2, channel)
         view.add_item(tiraButton("p2"))
         view.add_item(resaButton())
 
         embed = discord.Embed(
-            title=f"{p2.display_name} è il tuo turno!", 
+            title=f"{view.p2.display_name} è il tuo turno!", 
             description="Scegli cosa fare!",
             color=discord.Color.dark_red()
         )
         embed.set_author(
-            name=p2.display_name,
-            icon_url=p2.avatar.url
+            name=view.p2.display_name,
+            icon_url=view.p2.avatar.url
         )
         
-        msg = await channel.send(embeds=griglie(p1, p2, view.griglia1, view.griglia2, view.pt1, view.pt2) + [embed], view=view)
+        view.message = await channel.send(embeds=griglie(view.p1, view.p2, view.griglia1, view.griglia2, view.pt1, view.pt2) + [embed], view=view)
 
-        embed = discord.Embed(title="Hai accettato la sfida a **Knucklebones**", description=f"[Vai alla sfida!](<{msg.jump_url}>)")
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        embed = discord.Embed(
+            title=f"Hai accettato la sfida a **Knucklebones** contro {view.p1.display_name}",
+            description=f"[Vai alla sfida!](<{view.message.jump_url}>)",
+            color=discord.Color.green()
+            )
+        await ctx.message.edit(embed=embed, view=None)
+
+class refuseButton(Button):
+    def __init__(self):
+        super().__init__(label="Rifiuto", style=discord.ButtonStyle.red)
+        
+    async def callback(self, ctx: discord.Interaction):
+        # Invia un messaggio di conferma
+        view: KnucklebonesView = self.view
+        embed = view.embed
+        embed.description, embed.color = "La proposta è stata rifiutata.", discord.Color.red()
+        # Aggiorna il messaggio originale per rimuovere i pulsanti
+        await ctx.response.edit_message(embed=embed, view=None)
+        dm_channel1 = await view.p1.create_dm()
+        await dm_channel1.send(content=f"_Mi dispiace, la tua sfida a **Knucklebones** verso {view.p2.mention} è stata rifiutata._")
+        view.stop()
 
 class tiraButton(Button):
     def __init__(self, p):
         super().__init__(label="Tira!", style=discord.ButtonStyle.blurple)
         self.p = p
-        
+        self.emojis = {
+            1:"<:d6_1:1292657675221340190>",
+            2:"<:d6_2:1292657681311731762>",
+            3:"<:d6_3:1292657676366647347>",
+            4:"<:d6_4:1292657677561757726>", 
+            5:"<:d6_5:1292657678933426217>",
+            6:"<:d6_6:1292657680044785736>", 
+        }
     async def callback(self, ctx: discord.Interaction):
-        view: View = self.view
-        player = view.p1 if self.p == "p1" else view.p2
-        if ctx.user != player:
-            await ctx.response.send_message("Non è il tuo turno!", ephemeral=True)
-            return
+        view: KnucklebonesView = self.view
+        player, griglia = (view.p2, view.griglia2) if self.p == "p2" else (view.p1, view.griglia1)
 
+        # EMBED Colonna
         rolled_number = randint(1, 6)
         embed = discord.Embed(
-            title=f"{player.display_name} ha tirato un {rolled_number}!",
-            description="Scegli in quale colonna inserire il valore.",
-            color=discord.Color.dark_red() if player == "p2" else discord.Color.dark_blue()
+            title=f"{player.display_name} ha tirato un {self.emojis[rolled_number]}!",
+            description=f"Scegli in quale colonna inserire il **{rolled_number}**.",
+            color=discord.Color.dark_blue() if self.p == "p1" else discord.Color.dark_red()
         )
         embed.set_author(
             name=player.display_name,
             icon_url=player.avatar.url
         )
-        
+
         # Aggiunta dei bottoni per la scelta della colonna
         view.clear_items()
-        view.add_item(ColumnButton("Sx", rolled_number, self.p))
-        view.add_item(ColumnButton("Center", rolled_number, self.p))
-        view.add_item(ColumnButton("Dx", rolled_number, self.p))
+        # Verifica se la colonna "Sx" è piena
+        if any(cell == 0 for cell in [row[0] for row in griglia]):
+            view.add_item(ColumnButton("Sx", rolled_number, self.p))
+        # Verifica se la colonna "C" è piena
+        if any(cell == 0 for cell in [row[1] for row in griglia]):
+            view.add_item(ColumnButton("C", rolled_number, self.p))
+        # Verifica se la colonna "Dx" è piena
+        if any(cell == 0 for cell in [row[2] for row in griglia]):
+            view.add_item(ColumnButton("Dx", rolled_number, self.p))
         view.add_item(resaButton())
 
         await ctx.response.edit_message(embeds=griglie(view.p1, view.p2, view.griglia1, view.griglia2, view.pt1, view.pt2) + [embed], view=view)
@@ -521,105 +566,126 @@ class ColumnButton(Button):
         self.p = p
         
     async def callback(self, ctx: discord.Interaction):
-        view: View = self.view
-        player = view.p1 if self.p == "p1" else view.p2
-        if ctx.user != player:
-            await ctx.response.send_message("Non è il tuo turno!", ephemeral=True)
-            return
-
+        view: KnucklebonesView = self.view
         # Logica per inserire il valore nella griglia
-        col = {"Sx": 0, "Center": 1, "Dx": 2}[self.label]
+        col = {"Sx": 0, "C": 1, "Dx": 2}[self.label]
 
-        opponent_grid = view.griglia1 if self.p == "p2" else view.griglia2
+        def complete(matrice):
+            for row in matrice:
+                for num in row:
+                    if num == 0:
+                        return False
+            return True
+        
         # Trova la prima cella vuota nella colonna partendo dall'alto per p2 e dal basso per p1
-        if self.p == "p2":  
+        if self.p == "p2":
+            player, next_player = view.p2, view.p1
             for row in view.griglia2:
                 if row[col] == 0:
                     row[col] = self.rolled_number
                     break
-                    
+
             # Rimuove i numeri uguali dalla colonna dell'avversario e fa scalare i numeri
             for i in range(3):
-                if opponent_grid[i][col] == self.rolled_number:
-                    opponent_grid[i][col] = 0
-            
-            # Scala i numeri dall'alto verso il basso per p2
+                if view.griglia1[i][col] == self.rolled_number:
+                    view.griglia1[i][col] = 0
+
+            # Scala i numeri dall'alto verso il basso per p1
             for i in range(2, 0, -1):
-                if opponent_grid[i][col] == 0:
+                if view.griglia1[i][col] == 0:
                     # Trova la prima cella sopra non vuota
                     for j in range(i - 1, -1, -1):
-                        if opponent_grid[j][col] != 0:
-                            opponent_grid[i][col], opponent_grid[j][col] = opponent_grid[j][col], 0
-                            break     
-        
+                        if view.griglia1[j][col] != 0:
+                            view.griglia1[i][col], view.griglia1[j][col] = view.griglia1[j][col], 0
+                            break
+                            
+            end = complete(view.griglia2)
+
         else:
+            player, next_player = view.p1, view.p2
             for i in range(2, -1, -1):
                 if view.griglia1[i][col] == 0:
                     view.griglia1[i][col] = self.rolled_number
                     break
-            
+
             # Rimuove i numeri uguali dalla colonna dell'avversario e fa scalare i numeri
             for i in range(3):
-                if opponent_grid[i][col] == self.rolled_number:
-                    opponent_grid[i][col] = 0
-            
-            # Scala i numeri dal basso verso l'alto per p1
+                if view.griglia2[i][col] == self.rolled_number:
+                    view.griglia2[i][col] = 0
+
+            # Scala i numeri dal basso verso l'alto per p2
             for i in range(2):
-                if opponent_grid[i][col] == 0:
+                if view.griglia2[i][col] == 0:
                     # Trova la prima cella sopra non vuota
                     for j in range(2, i, -1):
-                        if opponent_grid[j][col] != 0:
-                            opponent_grid[i][col], opponent_grid[j][col] = opponent_grid[j][col], 0
+                        if view.griglia2[j][col] != 0:
+                            view.griglia2[i][col], view.griglia2[j][col] = view.griglia2[j][col], 0
                             break
+            
+            end = complete(view.griglia1)
+
+        # Aggiorna i punteggi
+        view.pt1, view.pt2 = pt([view.griglia1, view.griglia2])
+
+        if end:
+            winner = view.p1 if view.pt1 > view.pt2 else view.p2
         
-       # Aggiorna il punteggio per p1
-        view.pt1 = 0
-        for c in range(3):
-            col_vals = [view.griglia1[r][c] for r in range(3)]
-            for val in set(col_vals):
-                if val != 0:
-                    count = col_vals.count(val)
-                    # Calcola il punteggio secondo la tabella di moltiplicazione
-                    if count == 1:
-                        view.pt1 += val
-                    elif count == 2:
-                        view.pt1 += val * 4
-                    elif count == 3:
-                        view.pt1 += val * 9
-                        
-        # Aggiorna il punteggio per p1              
-        view.pt2 = 0
-        for c in range(3):
-            col_vals = [view.griglia2[r][c] for r in range(3)]
-            for val in set(col_vals):
-                if val != 0:
-                    count = col_vals.count(val)
-                    # Calcola il punteggio secondo la tabella di moltiplicazione
-                    if count == 1:
-                        view.pt2 += val
-                    elif count == 2:
-                        view.pt2 += val * 4
-                    elif count == 3:
-                        view.pt2 += val * 9
+            # Aggiorna l'embed per mostrare il vincitore
+            embed = discord.Embed(
+            title=f"{player.display_name} ha completato la sua griglia!",
+            description=f"Il vincitore è __{winner.mention}__!",
+            color=discord.Color.green()
+            )
+            embeds = griglie(view.p1, view.p2, view.griglia1, view.griglia2, view.pt1, view.pt2) + [embed]
+            if view.pt1 > view.pt2:
+                embeds[1].color = discord.Color.dark_blue()
+            else:
+                embeds[0].color = discord.Color.dark_red()
+            view.stop()
+            await ctx.response.edit_message(embeds=embeds, view=None)
 
+            
+        else:
+            # Aggiorna il turno al prossimo giocatore
+            view.turn = "p1" if view.turn == "p2" else "p2"
+            
+            # Ripristina i bottoni per il prossimo giocatore
+            view.clear_items()
+            view.add_item(tiraButton(view.turn))
+            view.add_item(resaButton())
+            
+            # Aggiorna l'embed per mostrare la nuova situazione del gioco
+            embed = discord.Embed(
+                title=f"{next_player.display_name} è il tuo turno!",
+                description="Scegli cosa fare!",
+                color=discord.Color.dark_blue() if view.turn == "p1" else discord.Color.dark_red()
+            )
+            embed.set_author(
+                name=next_player.display_name,
+                icon_url=next_player.avatar.url
+            )
+            await ctx.response.edit_message(embeds=griglie(view.p1, view.p2, view.griglia1, view.griglia2, view.pt1, view.pt2) + [embed], view=view)
 
-        # Ripristina i bottoni per il prossimo giocatore
-        next_player = view.p1 if view.turn == "p1" else view.p2
-        view.clear_items()
-        view.add_item(tiraButton(view.turn))
-        view.add_item(resaButton())
-
-        # Aggiorna l'embed per mostrare la nuova situazione del gioco
-        embed = discord.Embed(
-            title=f"{next_player.display_name} è il tuo turno!", 
-            description="Scegli cosa fare!",
-            color=discord.Color.dark_red() if next_player == view.p2 else discord.Color.dark_blue()
+class ruleButton(Button):
+    def __init__(self):
+        super().__init__(label="Regolamento", style=discord.ButtonStyle.blurple)
+        
+    async def callback(self, ctx: discord.Interaction):
+        # Testo del regolamento
+        regolamento = (
+            "# Regolamento di Knucklebones\n"
+            "## Obiettivo del gioco\nOttenere il punteggio più alto nelle griglie rispetto all'avversario.\n"
+            "## Come giocare\nOgni giocatore tira un __d6__ e sceglie una colonna dove inserire il numero ottenuto.\n"
+            "## Punti: Il valore del dado viene moltiplicato a seconda del numero di volte che compare in una colonna.\n"
+            "- 1 volta: x1\n"
+            "- 2 volte: x4\n"
+            "- 3 volte: x9\n"
+            "## Rimuovi numeri dell'avversario\nSe posizioni un numero che coincide con uno o più numeri nella stessa colonna dell'avversario, questi vengono rimossi.\n"
+            "## Vittoria\nVince chi ha il punteggio più alto quando uno dei due giocatori completa la griglia o se l'avversario si arrende.\n"
         )
-        embed.set_author(
-            name=next_player.display_name,
-            icon_url=next_player.avatar.url
-        )
-        await ctx.response.edit_message(embeds=griglie(view.p1, view.p2, view.griglia1, view.griglia2, view.pt1, view.pt2) + [embed], view=view)
+
+        # Invia il regolamento in privato all'utente che ha cliccato il pulsante
+        await ctx.response.send_message(regolamento)
 
 class KnucklebonesView(View):
     def __init__(self, p1, p2, channel, timeout=300.0):
@@ -644,8 +710,28 @@ class KnucklebonesView(View):
 
     async def on_timeout(self):
         if self.message:
-            await self.message.edit(content=f"_Mi dispiace, la partita è scaduta a causa dell'inattività._", embed=None, view=None)
-                            
+            dm_channel1 = await self.p1.create_dm()
+            dm_channel2 = await self.p2.create_dm()
+            if len(self.message.embeds) < 3:
+                self.message.embeds[0].description = "La proposta è stata rifiutata in automatico per inattività."
+                self.message.embeds[0].color = discord.Color.red()
+                await self.message.edit(embeds=[self.message.embeds[0]], view=None)
+                await dm_channel2.send(content=f"_Mi dispiace, la tua sfida a **Knucklebones** verso {self.p2.mention} è stata annullata a causa dell'inattività._")
+            else:  
+                await dm_channel1.send(content="_Mi dispiace, la partita è scaduta e ritenuta invalida a causa dell'inattività._", embeds=self.message.embeds[:2])
+                await dm_channel2.send(content="_Mi dispiace, la partita è scaduta e ritenuta invalida a causa dell'inattività._", embeds=self.message.embeds[:2])
+                await self.message.delete()
+                         
+    async def interaction_check(self, interaction: discord.Interaction):
+        # Permetti solo all'autore del comando di interagire con la view
+        player = self.p2 if self.turn == "p2" else self.p1
+        
+        if interaction.user != player:
+            await interaction.response.send_message(
+                "Non è il tuo turno!", ephemeral=True
+            )
+            return False
+        return True
 class Buttons(commands.Cog):
 
     def __init__(self, bot):
