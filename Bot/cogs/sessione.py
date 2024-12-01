@@ -139,6 +139,7 @@ class Sessione(commands.Cog):
         
         
     # DATA
+        session_date = None
         embed = discord.Embed(title="Quando inizierà  la Sessione?",
                             description="Digita `None` se non ha una data.\n\n> Venerdì 21.00\n> Domani 18.00\n> Ora\n> Tra 1 ora\n> AAAA-MM-GG 19.00",
                             color=color)
@@ -277,7 +278,7 @@ class Sessione(commands.Cog):
 
         
 
-        # THREAD CON BOTTONI
+        # THREAD
         thread = await message.create_thread(name=f"{sum(1 for i in channel.threads if ctx.user.name in i.name)+1}° Proposta di {ctx.user.name}")
         await thread.send(content=f"### {ctx.user.mention}, in caso di aggiunte, richieste o dubbi puoi chiedere qui ad un {role.mention}!", silent=True)
         
