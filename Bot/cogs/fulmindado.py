@@ -7,9 +7,9 @@ import asyncio
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'cogs_Spiky'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'cogs'))
 
-from button_Spiky import acceptButton, ruleButton, refuseButton, KnucklebonesView
+from buttons import acceptButton, ruleButton, refuseButton, KnucklebonesView
 
 class Knucklebones(commands.Cog):
     def __init__(self, bot):

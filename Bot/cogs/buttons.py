@@ -439,7 +439,7 @@ class resaButton(Button):
         super().__init__(label="Resa", style=discord.ButtonStyle.grey)
         
     async def callback(self, ctx: discord.Interaction):
-        view: KnucklebonesView = self.view
+        view: fulmidadoView = self.view
         winner = view.p1 if view.turn == "p2" else view.p2
         loser = view.p2 if view.turn == "p2" else view.p1
         color = discord.Color.dark_blue() if winner == view.p1 else discord.Color.dark_red()
@@ -474,13 +474,12 @@ class acceptButton(Button):
         super().__init__(label="Accetto", style=discord.ButtonStyle.green)
             
     async def callback(self, ctx: discord.Interaction):
-        view: KnucklebonesView = self.view
+        view: fulmidadoView = self.view
         channel = view.channel
         view.stop()
         
-        view = KnucklebonesView(view.p1, view.p2, channel)
+        view = fulmidadoView(view.p1, view.p2, channel)
         view.add_item(tiraButton("p2"))
-        view.add_item(resaButton())
 
         embed = discord.Embed(
             title=f"{view.p2.display_name} è il tuo turno!", 
@@ -495,7 +494,7 @@ class acceptButton(Button):
         view.message = await channel.send(embeds=griglie(view.p1, view.p2, view.griglia1, view.griglia2, view.pt1, view.pt2) + [embed], view=view)
 
         embed = discord.Embed(
-            title=f"Hai accettato la sfida a **Knucklebones** contro {view.p1.display_name}",
+            title=f"Hai accettato la sfida a **Fulmidado** contro {view.p1.display_name}",
             description=f"[Vai alla sfida!](<{view.message.jump_url}>)",
             color=discord.Color.green()
             )
@@ -507,13 +506,13 @@ class refuseButton(Button):
         
     async def callback(self, ctx: discord.Interaction):
         # Invia un messaggio di conferma
-        view: KnucklebonesView = self.view
+        view: fulmidadoView = self.view
         embed = view.embed
         embed.description, embed.color = "La proposta è stata rifiutata.", discord.Color.red()
         # Aggiorna il messaggio originale per rimuovere i pulsanti
         await ctx.response.edit_message(embed=embed, view=None)
         dm_channel1 = await view.p1.create_dm()
-        await dm_channel1.send(content=f"_Mi dispiace, la tua sfida a **Knucklebones** verso {view.p2.mention} è stata rifiutata._")
+        await dm_channel1.send(content=f"_Mi dispiace, la tua sfida a **Fulmidado** verso {view.p2.mention} è stata rifiutata._")
         view.stop()
 
 class tiraButton(Button):
@@ -529,7 +528,7 @@ class tiraButton(Button):
             6:"<:d6_6:1292657680044785736>", 
         }
     async def callback(self, ctx: discord.Interaction):
-        view: KnucklebonesView = self.view
+        view: fulmidadoView = self.view
         player, griglia = (view.p2, view.griglia2) if self.p == "p2" else (view.p1, view.griglia1)
 
         # EMBED Colonna
@@ -566,7 +565,7 @@ class ColumnButton(Button):
         self.p = p
         
     async def callback(self, ctx: discord.Interaction):
-        view: KnucklebonesView = self.view
+        view: fulmidadoView = self.view
         # Logica per inserire il valore nella griglia
         col = {"Sx": 0, "C": 1, "Dx": 2}[self.label]
 
@@ -671,24 +670,68 @@ class ruleButton(Button):
         super().__init__(label="Regolamento", style=discord.ButtonStyle.blurple)
         
     async def callback(self, ctx: discord.Interaction):
-        # Testo del regolamento
-        regolamento = (
-            "# Regolamento di Knucklebones\n"
-            "## Obiettivo del gioco\nOttenere il punteggio più alto nelle griglie rispetto all'avversario.\n"
-            "## Come giocare\nOgni giocatore tira un __d6__ e sceglie una colonna dove inserire il numero ottenuto.\n"
-            "## Punti: Il valore del dado viene moltiplicato a seconda del numero di volte che compare in una colonna.\n"
-            "- 1 volta: x1\n"
-            "- 2 volte: x4\n"
-            "- 3 volte: x9\n"
-            "## Rimuovi numeri dell'avversario\nSe posizioni un numero che coincide con uno o più numeri nella stessa colonna dell'avversario, questi vengono rimossi.\n"
-            "## Vittoria\nVince chi ha il punteggio più alto quando uno dei due giocatori completa la griglia o se l'avversario si arrende.\n"
+        # Crea un embed per il regolamento
+        embed = discord.Embed(
+            title="Regolamento di Fulmidado",
+            description="Regole ufficiali per il torneo di Fulmidado durante Borgofest",
+            color=discord.Color.blue()
         )
 
-        # Invia il regolamento in privato all'utente che ha cliccato il pulsante
-        await ctx.response.send_message(regolamento)
+        # Aggiunge le sezioni al regolamento
+        embed.add_field(
+            name="Obiettivo del gioco",
+            value="Ottenere il punteggio più alto nelle griglie rispetto all'avversario.",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="Come giocare",
+            value=(
+                "Ogni giocatore tira un __d6__ e sceglie una colonna dove inserire il numero ottenuto.\n"
+                "Il valore del dado viene moltiplicato in base a quante volte lo stesso numero compare in una colonna:\n"
+                "- 1 volta: x1\n"
+                "- 2 volte: x4\n"
+                "- 3 volte: x9"
+            ),
+            inline=False
+        )
 
-class KnucklebonesView(View):
-    def __init__(self, p1, p2, channel, timeout=300.0):
+        embed.add_field(
+            name="Rimuovi numeri dell'avversario",
+            value="Se posizioni un numero che coincide con uno o più numeri nella stessa colonna dell'avversario, questi vengono rimossi.",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="Vittoria",
+            value="Vince chi ha il punteggio più alto quando uno dei due giocatori completa la griglia.",
+            inline=False
+        )
+        
+        # Modalità di gioco Borgofest
+        embed.add_field(
+            name="Punti Borgofest",
+            value=(
+                "Durante Borgofest, oltre ai normali punti, i giocatori accumulano **Punti Borgofest** a seconda della modalità scelta, sottraendoli all'avversario in caso di vincita.\n La modalità va scelta assieme all'avversario prima di chiedere la sfida, e queste sono:"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="Modalità di gioco",
+            value=(
+                "1. **Mezzo**: Il vincente sottrae metà della differenza di punti al perdente.\n"
+                "2. **Intero**: Il vincente sottrae la differenza di punti al perdente.\n"
+                "3. **Doppio**: Il vincente sottrae il doppio della differenza di punti al perdente."
+            ),
+            inline=False
+        )
+
+        # Invia il regolamento come embed all'utente che ha cliccato il pulsante
+        await ctx.response.send_message(embed=embed, ephemeral=True)
+
+class fulmidadoView(View):
+    def __init__(self, p1, p2, channel, timeout=3600.0):
         super().__init__(timeout=timeout)
         self.p1 = p1
         self.p2 = p2
@@ -716,7 +759,7 @@ class KnucklebonesView(View):
                 self.message.embeds[0].description = "La proposta è stata rifiutata in automatico per inattività."
                 self.message.embeds[0].color = discord.Color.red()
                 await self.message.edit(embeds=[self.message.embeds[0]], view=None)
-                await dm_channel2.send(content=f"_Mi dispiace, la tua sfida a **Knucklebones** verso {self.p2.mention} è stata annullata a causa dell'inattività._")
+                await dm_channel2.send(content=f"_Mi dispiace, la tua sfida a **Fulmidado** verso {self.p2.mention} è stata annullata a causa dell'inattività._")
             else:  
                 await dm_channel1.send(content="_Mi dispiace, la partita è scaduta e ritenuta invalida a causa dell'inattività._", embeds=self.message.embeds[:2])
                 await dm_channel2.send(content="_Mi dispiace, la partita è scaduta e ritenuta invalida a causa dell'inattività._", embeds=self.message.embeds[:2])

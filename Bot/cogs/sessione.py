@@ -3,11 +3,18 @@
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
+from discord.ui import View
 import asyncio
+
+import os
+import sys
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'cogs'))
+    
+from buttons import OkButton
 
 from datetime import datetime
 import dateparser
-
 
 class Sessione(commands.Cog):
 
@@ -17,17 +24,23 @@ class Sessione(commands.Cog):
     @app_commands.command(name="sessione", description="Proponi una tua Sessione ai responsabili Trama & Lore!")
     @app_commands.guild_only()
     async def proposta_sessione(self, ctx: discord.Interaction):
-    
+        
+        # RUOLO D'APPROVATORE
+        role = discord.utils.get(ctx.guild.roles, name="Responsabile Trama & Lore")
+        channel = self.bot.get_channel(1196894324122714283)
+        
         await ctx.response.defer(thinking=True, ephemeral=True)
     
         if not discord.utils.get(ctx.user.roles, name='Master'):
             await ctx.followup.send('Mi dispiace, ma solo un master può usare questo comando.', ephemeral=True)
             return
-            
+        
+        dm_channel = await ctx.user.create_dm()
+        
         def check(m):
             return m.author == ctx.user and m.channel == dm_channel
         
-        dm_channel = await ctx.user.create_dm()
+    
         
         footer = "Inserisci un numero per selezionare una opzione\nPer annullare, digita 'cancella'"
         color = 0xFFFF00
@@ -55,7 +68,6 @@ class Sessione(commands.Cog):
             while True:
                 msg = await self.bot.wait_for('message', check=check, timeout=timeout)
                 if msg.content.lower() == 'cancella':
-                    await ctx.channel.purge(limit=1)
                     await dm_channel.send('Sessione cancellata.')
                     return
                 elif msg.content in session_types.keys():
@@ -127,7 +139,6 @@ class Sessione(commands.Cog):
         
         
     # DATA
-        session_date = True
         embed = discord.Embed(title="Quando inizierà  la Sessione?",
                             description="Digita `None` se non ha una data.\n\n> Venerdì 21.00\n> Domani 18.00\n> Ora\n> Tra 1 ora\n> AAAA-MM-GG 19.00",
                             color=color)
@@ -210,17 +221,11 @@ class Sessione(commands.Cog):
                             color=color)
         embed.set_author(name=ctx.user.display_name, icon_url=ctx.user.display_avatar.url)
         embed.set_footer(text=str(datetime.today().strftime('%d/%m/%Y %H:%M')))
-
-        if session_date:
-            session_date = int(date.timestamp())
-            embed.add_field(name="Data",
-                            value=f"<t:{session_date}:f>",
-                            inline=False)
         
         embed.add_field(name="Tipologia",
                         value=session_types,
                         inline=True)
-        
+
         embed.add_field(name="Restrizione/i",
                         value=session_res,
                         inline=True)
@@ -230,51 +235,69 @@ class Sessione(commands.Cog):
                         inline=True)
         
         embed.add_field(name="Descrizione della Sessione",
-                        value="")
+                        value=session_desc[:1024],
+                        inline=False)
         
-        while len(session_desc) > 0:
-            if len(session_desc) > 1024:
-                embed.add_field(name="",
-                                value=session_desc[:1024],
-                                inline=False)
-                session_desc = session_desc[1024:]
-            else:
-                embed.add_field(name="",
-                                value=session_desc,
-                                inline=False)
-                session_desc = ""
+        while len(session_desc) > 1024:
+            session_desc = session_desc[1024:]
+            embed.add_field(name="",
+                            value=session_desc[:1024],
+                            inline=False)
         
-        message = await self.bot.get_channel(1196894324122714283).send(embed=embed)
+        if session_date:
+            session_date = int(date.timestamp())
+            embed.add_field(name="Data",
+                            value=f"<t:{session_date}:F>\n:clock2: <t:{session_date}:R>",
+                            inline=False)
+        else:
+            embed.add_field(name="Data",
+                            value="Nessuna",
+                            inline=False)
+        
+        embed.add_field(name="✅ Approvatori",
+                        value="-",
+                        inline=True)
+        
+        view = View(timeout=None)
+        view.add_item(OkButton(label="Approvato"))
+        # view.add_item(EditButton())
+        view.app = []
+        view.embed = embed
+        view.role = role
+        view.color = color
+        
+        message = await channel.send(embed=embed, view=view)
 
         # EMBED RISPOSTA
-        embed = discord.Embed(title="La proposta di sessione è stata creata!",
+        embedR = discord.Embed(title="La proposta di sessione è stata creata!",
                             description=f"[Clicca qui per visualizzare la proposta](<{message.jump_url}>)",
                             color=color)
         
-        await dm_channel.send(embed=embed)
+        await dm_channel.send(embed=embedR)
 
-        role = discord.utils.get(ctx.guild.roles, name="Responsabile Trama & Lore")
-
-        # THREAD CON REAZIONE
-        thread = await message.create_thread(name=f"{sum(1 for i in ctx.channel.threads if ctx.user.name in i.name)+1}° Proposta di {ctx.user.name}")
-        await thread.send(content=f"### {ctx.user.mention}, in caso di aggiunte, richieste o dubbi puoi chiedere qui ad un {role.mention}!", silent=True)
-        await message.add_reaction('✅')
-        await message.add_reaction('❌')
-
-        def check(reaction, user):
-            return (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌') and reaction.count >= len(role.members)//2
         
+
+        # THREAD CON BOTTONI
+        thread = await message.create_thread(name=f"{sum(1 for i in channel.threads if ctx.user.name in i.name)+1}° Proposta di {ctx.user.name}")
+        await thread.send(content=f"### {ctx.user.mention}, in caso di aggiunte, richieste o dubbi puoi chiedere qui ad un {role.mention}!", silent=True)
+        
+        self.message = message
+        self.user = ctx.user
+        self.view = view
+        self.role = role
+        self.thread = thread
+        self.approve_task = self.approve.start()
+        
+    @tasks.loop(seconds = 1)
+    async def approve(self):
         try:
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=60*60*24*7, check=check)  # 60 sec * 60 min * 24 hours * 7 days
-            if str(reaction.emoji) == '✅' and reaction.count >= reaction.count >= len(role.members)//2:
-                    await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione è stata approvata!')
-                    await thread.edit(archived=True)
-
-            elif str(reaction.emoji) == '❌' and reaction.count >= reaction.count >= len(role.members)//2:
-                await thread.send(f'### {ctx.user.mention}, ti informiamo che la tua Sessione __NON__ è stata approvata.\nPer capirne le motivazioni, contattare un {role.mention} (anche in questo thread stesso).')
-
+            if((len(self.view.app) >= len(self.role.members)//2 )): 
+                await self.thread.send(f'### {self.user.mention}, la tua Sessione è stata approvata! ✅\nRicorda di postarla su <#1206935673806782524>.')
+                await self.thread.edit(archived=True)
+                self.approve_task.cancel()
+        
         except asyncio.TimeoutError:
-            return
-
+                return
+            
 async def setup(bot):
     await bot.add_cog(Sessione(bot))
