@@ -54,29 +54,28 @@ class Sessione(commands.Cog):
         
         try:
             # RUOLO D'APPROVATORE
-            role = discord.utils.get(ctx.guild.roles, name="Responabile Trama & Lore")
+            role = discord.utils.get(ctx.guild.roles, name="Responsabile Trama & Lore")
             channel = self.bot.get_channel(1196894324122714283)
             
             await ctx.response.defer(thinking=True, ephemeral=True)
         
             if not discord.utils.get(ctx.user.roles, name='Master'):
                 await ctx.followup.send('Mi dispiace, ma solo un master può usare questo comando.', ephemeral=True)
+                self.active_users.discard(ctx.user.id)
                 return
             
             dm_channel = await ctx.user.create_dm()
             
             def check(m):
                 return m.author == ctx.user and m.channel == dm_channel
-            
-        
-            
+
             footer = "Inserisci un numero per selezionare una opzione\nPer annullare, digita 'cancella'"
             color = 0xFFFF00
             
             await ctx.followup.send(embed=discord.Embed(title="Proponi una Sessione!",
                                                         description=f"Ti ho inviato un [messaggio diretto](<{ctx.user.dm_channel.jump_url}>) con i passaggi successivi.",
                                                         color=color), ephemeral=True)
-            
+
             def desc(input_dict):
                 output_string = ""
                 for key, value in input_dict.items():
@@ -97,6 +96,7 @@ class Sessione(commands.Cog):
                     msg = await self.bot.wait_for('message', check=check, timeout=timeout)
                     if msg.content.lower() == 'cancella':
                         await dm_channel.send('Sessione cancellata.')
+                        self.active_users.discard(ctx.user.id)
                         return
                     elif msg.content in session_types.keys():
                         session_type = session_types[msg.content]
@@ -106,10 +106,9 @@ class Sessione(commands.Cog):
             
             except asyncio.TimeoutError:
                 await dm_channel.send('Sei andato al cesso? Riproveremo più tardi.')
+                self.active_users.discard(ctx.user.id)
                 return
             
-            
-        # DURATA
             duration_types = {
             'Vocale': {'1':'One-Shot', '2': 'Bi-Shot', '3': 'Tri-Shot', '4': 'Campagna Breve', '5': 'Campagna Media', '6': 'Campagna Lunga'},
             'Play by Chat': {'1':'Sessione PbC', '2': 'Evento PbC', '3': 'Campagna PbC', '4': 'PbC di Intermezzo'}
@@ -127,6 +126,7 @@ class Sessione(commands.Cog):
                         msg = await self.bot.wait_for('message', check=check, timeout=timeout)
                         if msg.content.lower() == 'cancella':
                             await dm_channel.send('Sessione cancellata.')
+                            self.active_users.discard(ctx.user.id)
                             return
                         elif msg.content in duration_types[session_type].keys():
                             session_duration = duration_types[session_type][msg.content]
@@ -141,11 +141,9 @@ class Sessione(commands.Cog):
             
             except asyncio.TimeoutError:
                 await dm_channel.send('Sei andato al cesso? Riproveremo più tardi.')
+                self.active_users.discard(ctx.user.id)
                 return
 
-            
-            
-        # DESCRIZIONE
             try:
                 embed = discord.Embed(title="Inserisci la descrizione della Sessione",
                                     description="Inserire una descrizione è obbligatorio. Sono consentiti fino a 1600 caratteri.",
@@ -157,18 +155,17 @@ class Sessione(commands.Cog):
                 
                 if msg.content.lower() == 'cancella':
                     await dm_channel.send('Sessione cancellata.')
+                    self.active_users.discard(ctx.user.id)
                     return
                 else:
                     session_desc = msg.content
-                    
             except asyncio.TimeoutError:
                 await dm_channel.send('Sei andato al cesso? Riproveremo più tardi.')
+                self.active_users.discard(ctx.user.id)
                 return
             
-            
-        # DATA
             session_date = None
-            embed = discord.Embed(title="Quando inizierà  la Sessione?",
+            embed = discord.Embed(title="Quando inizierà la Sessione?",
                                 description="Digita `None` se non ha una data.\n\n> Venerdì 21.00\n> Domani 18.00\n> Ora\n> Tra 1 ora\n> AAAA-MM-GG 19.00",
                                 color=color)
             embed.set_footer(text=footer[-32:])
@@ -178,6 +175,7 @@ class Sessione(commands.Cog):
                     msg = await self.bot.wait_for('message', check=check, timeout=timeout)
                     if msg.content.lower() == 'cancella':
                         await dm_channel.send('Sessione cancellata.')
+                        self.active_users.discard(ctx.user.id)
                         return
                     elif msg.content.lower() == 'none':
                         session_date = False
@@ -191,10 +189,9 @@ class Sessione(commands.Cog):
             
             except asyncio.TimeoutError:
                 await dm_channel.send('Sei andato al cesso? Riproveremo più tardi.')
+                self.active_users.discard(ctx.user.id)
                 return
             
-            
-        # RESTRIZIONI
             try:
                 embed = discord.Embed(title="Inserisci le restrizioni della Sessione",
                                     description="Digita `None` se non ha una restrizione.\n\n> Livelli: 5-8\n> Gilda: Diamanti Neri\n> Fazione: Guardie\n> Classe: Bardi\n> Role: Ha visto di persona Gesù",
@@ -207,16 +204,16 @@ class Sessione(commands.Cog):
                     session_res = 'Nessuna'
                 elif msg.content.lower() == 'cancella':
                     await dm_channel.send('Sessione cancellata.')
+                    self.active_users.discard(ctx.user.id)
                     return
                 else:
                     session_res = msg.content
-                    
+            
             except asyncio.TimeoutError:
                 await dm_channel.send('Sei andato al cesso? Riproveremo più tardi.')
+                self.active_users.discard(ctx.user.id)
                 return 
             
-            
-        # NUMERO GIOCATORI
             try:
                 embed = discord.Embed(title="Inserisci un limite di giocatori per la Sessione",
                                     description="Utilizza solo numeri. Digita `None` per non mettere un limite.",
@@ -228,6 +225,7 @@ class Sessione(commands.Cog):
                     msg = await self.bot.wait_for('message', check=check, timeout=timeout)
                     if msg.content.lower() == 'cancella':
                         await dm_channel.send('Sessione cancellata.')
+                        self.active_users.discard(ctx.user.id)
                         return
                     elif msg.content.lower() == 'none':
                         session_amt = '∞'
@@ -237,14 +235,11 @@ class Sessione(commands.Cog):
                         break
                     else:
                         await dm_channel.send("Non hai inserito un numero. Riprova.")
-                    
             except asyncio.TimeoutError:
                 await dm_channel.send('Sei andato al cesso? Riproveremo più tardi.')
-                return 
+                self.active_users.discard(ctx.user.id)
+                return
             
-            
-            
-        # EMBED FINALE
             embed = discord.Embed(title="",
                                 description=f'### Proposta di Sessione di __{ctx.user.mention}__',
                                 color=color)
@@ -295,7 +290,6 @@ class Sessione(commands.Cog):
             
         view = View(timeout=None)
         view.add_item(OkButton(label="Approvato"))
-        # view.add_item(EditButton())
         view.app = []
         view.embed = embed
         view.role = role
@@ -303,18 +297,15 @@ class Sessione(commands.Cog):
         
         message = await channel.send(embed=embed, view=view)
 
-        # EMBED RISPOSTA
         embedR = discord.Embed(title="La proposta di sessione è stata creata!",
                             description=f"[Clicca qui per visualizzare la proposta](<{message.jump_url}>)",
                             color=color)
         
         await dm_channel.send(embed=embedR)
         
-        # THREAD
         thread = await message.create_thread(name=f"{sum(1 for i in channel.threads if ctx.user.name in i.name)+1}° Proposta di {ctx.user.name}")
         await thread.send(content=f"### {ctx.user.mention}, in caso di aggiunte, richieste o dubbi puoi chiedere qui ad un {role.mention}!", silent=True)
 
-        # Salva i dettagli della proposta
         self.active_approvals[message.id] = {
             "message": message,
             "user": ctx.user,
@@ -323,7 +314,6 @@ class Sessione(commands.Cog):
             "thread": thread,
         }
 
-        # Avvia il task per questa proposta
         self.start_approve_task(message.id)
         
     @tasks.loop(seconds = 1)
